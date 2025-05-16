@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-luno-mcp
+mcp-luno
 
 # Environment files
 .env
