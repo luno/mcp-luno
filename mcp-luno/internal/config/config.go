@@ -43,11 +43,11 @@ func maskValue(s string) string {
 // Load loads the configuration from environment variables
 func Load(domainOverride string) (*Config, error) {
 	// Debugging: Print all environment variables to see if they're properly set
-	fmt.Println("*** Environment Variables Debug ***")
-	for _, env := range os.Environ() {
-		fmt.Println(env)
-	}
-	fmt.Println("*** End Environment Variables Debug ***")
+	// fmt.Println("*** Environment Variables Debug ***")
+	// for _, env := range os.Environ() {
+	// 	fmt.Println(env)
+	// }
+	// fmt.Println("*** End Environment Variables Debug ***")
 
 	apiKeyID := os.Getenv(EnvLunoAPIKeyID)
 	apiKeySecret := os.Getenv(EnvLunoAPIKeySecret)
@@ -70,8 +70,10 @@ func Load(domainOverride string) (*Config, error) {
 	if domain != DefaultLunoDomain {
 		client.SetBaseURL(fmt.Sprintf("https://%s", domain))
 	}
-	client.SetAuth(apiKeyID, apiKeySecret)
-
+	err := client.SetAuth(apiKeyID, apiKeySecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set Luno API credentials: %w", err)
+	}
 	return &Config{
 		LunoAPIKeyID:     apiKeyID,
 		LunoAPIKeySecret: apiKeySecret,
