@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/echarrod/mcp-luno/internal/config"
 	"github.com/luno/luno-go"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
 )
 
 // Resource URIs
@@ -23,13 +25,13 @@ func NewWalletResource() mcp.Resource {
 	return mcp.NewResource(
 		WalletResourceURI,
 		"Luno Wallets",
-		mcp.WithDescription("Returns all wallets/balances from your Luno account"),
+		mcp.WithResourceDescription("Returns all wallets/balances from your Luno account"),
 		mcp.WithMIMEType("application/json"),
 	)
 }
 
 // HandleWalletResource returns a handler for the wallet resource
-func HandleWalletResource(cfg *config.Config) mcp.ResourceHandlerFunc {
+func HandleWalletResource(cfg *config.Config) server.ResourceHandlerFunc {
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		balances, err := cfg.LunoClient.GetBalances(ctx, &luno.GetBalancesRequest{})
 		if err != nil {
@@ -56,13 +58,13 @@ func NewTransactionsResource() mcp.Resource {
 	return mcp.NewResource(
 		TransactionsResourceURI,
 		"Luno Transactions",
-		mcp.WithDescription("Returns recent transactions from your Luno account"),
+		mcp.WithResourceDescription("Returns recent transactions from your Luno account"),
 		mcp.WithMIMEType("application/json"),
 	)
 }
 
 // HandleTransactionsResource returns a handler for the transactions resource
-func HandleTransactionsResource(cfg *config.Config) mcp.ResourceHandlerFunc {
+func HandleTransactionsResource(cfg *config.Config) server.ResourceHandlerFunc {
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		// Get transactions for the first account that has them
 		balances, err := cfg.LunoClient.GetBalances(ctx, &luno.GetBalancesRequest{})
@@ -83,7 +85,7 @@ func HandleTransactionsResource(cfg *config.Config) mcp.ResourceHandlerFunc {
 		// Take the first account with non-zero balance
 		var accountID string
 		for _, balance := range balances.Balance {
-			if balance.Balance != "0.0" {
+			if balance.Balance.Sign() != 0 {
 				accountID = balance.AccountId
 				break
 			}
@@ -93,11 +95,16 @@ func HandleTransactionsResource(cfg *config.Config) mcp.ResourceHandlerFunc {
 		if accountID == "" && len(balances.Balance) > 0 {
 			accountID = balances.Balance[0].AccountId
 		}
-
 		// Get transactions for the selected account
+		accountIDInt, err := strconv.ParseInt(accountID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse account ID: %w", err)
+		}
+
 		txnReq := &luno.ListTransactionsRequest{
-			Id:    accountID,
-			Limit: 20, // Limit to 20 transactions for readability
+			Id:     accountIDInt,
+			MinRow: 0,  // Start from the first transaction
+			MaxRow: 20, // Get up to 20 transactions
 		}
 
 		transactions, err := cfg.LunoClient.ListTransactions(ctx, txnReq)
@@ -125,12 +132,12 @@ func NewAccountTemplate() mcp.ResourceTemplate {
 	return mcp.NewResourceTemplate(
 		AccountTemplateURI,
 		"Luno Account",
-		mcp.WithResourceTemplateDescription("Returns details for a specific Luno account"),
+		mcp.WithTemplateDescription("Returns details for a specific Luno account"),
 	)
 }
 
 // HandleAccountTemplate returns a handler for the account resource template
-func HandleAccountTemplate(cfg *config.Config) mcp.ResourceTemplateHandlerFunc {
+func HandleAccountTemplate(cfg *config.Config) server.ResourceTemplateHandlerFunc {
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 		// Extract account ID from URI
 		uri := request.Params.URI
@@ -159,15 +166,16 @@ func HandleAccountTemplate(cfg *config.Config) mcp.ResourceTemplateHandlerFunc {
 				break
 			}
 		}
-
-		if account == nil {
-			return nil, fmt.Errorf("account not found: %s", accountID)
+		accountIDInt, err := strconv.ParseInt(accountID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse account ID: %w", err)
 		}
 
 		// Add transaction history
 		txnReq := &luno.ListTransactionsRequest{
-			Id:    accountID,
-			Limit: 10, // Limit to 10 transactions for readability
+			Id:     accountIDInt,
+			MinRow: 0,  // Start from the first transaction
+			MaxRow: 10, // Get up to 10 transactions
 		}
 
 		transactions, err := cfg.LunoClient.ListTransactions(ctx, txnReq)
