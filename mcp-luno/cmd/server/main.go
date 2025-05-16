@@ -20,10 +20,28 @@ const (
 )
 
 func main() {
-	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		// Just log, don't exit - this allows the app to run without .env file
+	// Try different possible locations for the .env file
+	envPaths := []string{
+		".env",    // Current directory
+		"../.env", // Parent directory
+		"/Users/ed/dev/hackathon/model-context-party/mcp-luno/.env", // Absolute path
+	}
+
+	envLoaded := false
+	for _, path := range envPaths {
+		if err := godotenv.Load(path); err == nil {
+			log.Printf("Successfully loaded environment from %s", path)
+			envLoaded = true
+			break
+		}
+	}
+
+	if !envLoaded {
 		log.Println("Warning: No .env file found or unable to load it. Make sure environment variables are set.")
+		// Print current directory for debugging
+		if cwd, err := os.Getwd(); err == nil {
+			log.Printf("Current working directory: %s", cwd)
+		}
 	}
 
 	// Parse command line flags

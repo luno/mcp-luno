@@ -32,10 +32,28 @@ type Config struct {
 	LunoDomain string
 }
 
+// Mask a string to show only the first 4 characters and replace the rest with asterisks
+func maskValue(s string) string {
+	if len(s) <= 4 {
+		return strings.Repeat("*", len(s))
+	}
+	return s[:4] + strings.Repeat("*", len(s)-4)
+}
+
 // Load loads the configuration from environment variables
 func Load(domainOverride string) (*Config, error) {
+	// Debugging: Print all environment variables to see if they're properly set
+	fmt.Println("*** Environment Variables Debug ***")
+	for _, env := range os.Environ() {
+		fmt.Println(env)
+	}
+	fmt.Println("*** End Environment Variables Debug ***")
+
 	apiKeyID := os.Getenv(EnvLunoAPIKeyID)
 	apiKeySecret := os.Getenv(EnvLunoAPIKeySecret)
+
+	fmt.Printf("LUNO_API_KEY_ID value: %s (length: %d)\n", maskValue(apiKeyID), len(apiKeyID))
+	fmt.Printf("LUNO_API_SECRET value: %s (length: %d)\n", maskValue(apiKeySecret), len(apiKeySecret))
 
 	if apiKeyID == "" || apiKeySecret == "" {
 		return nil, errors.New("Luno API credentials not found. Please set LUNO_API_KEY_ID and LUNO_API_SECRET environment variables")
