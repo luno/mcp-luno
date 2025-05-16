@@ -24,8 +24,13 @@ echo "Build complete!"
 echo ""
 
 # Start the server in the background (SSE mode)
-echo "Starting Luno MCP Server in SSE mode..."
-./mcp-luno --transport sse --sse-address localhost:8080 --log-level debug &
+# echo "Starting Luno MCP Server in SSE mode..."
+# ./mcp-luno --transport sse --sse-address localhost:8080 --log-level debug &
+
+# Start the server in the background
+echo "Starting Luno MCP Server in stdio mode..."
+./mcp-luno --log-level debug &
+
 SERVER_PID=$!
 
 # Wait for server to start
@@ -35,43 +40,12 @@ echo ""
 
 # Print instructions
 echo "The server is now running in SSE mode on localhost:8080"
-echo ""
-echo "You can integrate it with VS Code by adding the following to your settings.json:"
-echo ""
-echo '{
-  "mcp": {
-    "servers": {
-      "luno": {
-        "type": "sse",
-        "url": "http://localhost:8080/sse"
-      }
-    }
-  }
-}'
-echo ""
-echo "Alternatively, for stdio mode, use:"
-echo ""
-echo '{
-  "mcp": {
-    "servers": {
-      "luno": {
-        "command": "mcp-luno",
-        "args": [],
-        "env": {
-          "LUNO_API_KEY_ID": "your_api_key_id",
-          "LUNO_API_SECRET": "your_api_secret"
-        }
-      }
-    }
-  }
-}'
-echo ""
 
 # Test the list_trades tool if curl is available
 if command -v curl &> /dev/null; then
   echo "Testing list_trades tool for XBTZAR pair..."
   echo ""
-  
+
   curl -s -X POST -H "Content-Type: application/json" -d '{
     "jsonrpc": "2.0",
     "id": 1,
@@ -83,7 +57,7 @@ if command -v curl &> /dev/null; then
       }
     }
   }' http://localhost:8080/jsonrpc | json_pp
-  
+
   echo ""
   echo "Tool test complete!"
   echo ""
