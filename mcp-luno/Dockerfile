@@ -17,7 +17,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o mcp-luno ./cmd/server
 # Create a minimal final image
 FROM alpine:latest
 
-WORKDIR /ap
+WORKDIR /app
 
 # Copy the binary from the builder stage
 COPY --from=builder /app/mcp-luno .
