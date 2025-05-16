@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/echarrod/luno-mcp/internal/config"
+	"github.com/echarrod/mcp-luno/internal/config"
 	"github.com/luno/luno-go"
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -99,7 +99,7 @@ func HandleTransactionsResource(cfg *config.Config) mcp.ResourceHandlerFunc {
 			Id:    accountID,
 			Limit: 20, // Limit to 20 transactions for readability
 		}
-		
+
 		transactions, err := cfg.LunoClient.ListTransactions(ctx, txnReq)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get transactions: %w", err)
@@ -169,7 +169,7 @@ func HandleAccountTemplate(cfg *config.Config) mcp.ResourceTemplateHandlerFunc {
 			Id:    accountID,
 			Limit: 10, // Limit to 10 transactions for readability
 		}
-		
+
 		transactions, err := cfg.LunoClient.ListTransactions(ctx, txnReq)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get transactions: %w", err)

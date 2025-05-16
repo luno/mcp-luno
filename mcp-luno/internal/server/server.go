@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/echarrod/luno-mcp/internal/config"
-	"github.com/echarrod/luno-mcp/internal/resources"
-	"github.com/echarrod/luno-mcp/internal/tools"
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/echarrod/mcp-luno/internal/config"
+	"github.com/echarrod/mcp-luno/internal/resources"
+	"github.com/echarrod/mcp-luno/internal/tools"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 
@@ -57,24 +56,24 @@ func registerTools(server *mcpserver.MCPServer, cfg *config.Config) {
 	// Add market tools
 	tickerTool := tools.NewGetTickerTool()
 	server.AddTool(tickerTool, tools.HandleGetTicker(cfg))
-	
+
 	orderBookTool := tools.NewGetOrderBookTool()
 	server.AddTool(orderBookTool, tools.HandleGetOrderBook(cfg))
 
 	// Add trading tools
 	createOrderTool := tools.NewCreateOrderTool()
 	server.AddTool(createOrderTool, tools.HandleCreateOrder(cfg))
-	
+
 	cancelOrderTool := tools.NewCancelOrderTool()
 	server.AddTool(cancelOrderTool, tools.HandleCancelOrder(cfg))
-	
+
 	listOrdersTool := tools.NewListOrdersTool()
 	server.AddTool(listOrdersTool, tools.HandleListOrders(cfg))
 
 	// Add transaction tools
 	listTransactionsTool := tools.NewListTransactionsTool()
 	server.AddTool(listTransactionsTool, tools.HandleListTransactions(cfg))
-	
+
 	getTransactionTool := tools.NewGetTransactionTool()
 	server.AddTool(getTransactionTool, tools.HandleGetTransaction(cfg))
 }
@@ -82,14 +81,14 @@ func registerTools(server *mcpserver.MCPServer, cfg *config.Config) {
 // ServeStdio starts the server using the Stdio transport
 func ServeStdio(ctx context.Context, s *mcpserver.MCPServer) error {
 	stdioServer := mcpserver.NewStdioServer(s)
-	
+
 	// Create context function that adds authentication
 	contextFunc := func(ctx context.Context) context.Context {
 		return ctx
 	}
-	
+
 	stdioServer.SetContextFunc(contextFunc)
-	
+
 	// Listen on stdin/stdout
 	return stdioServer.Listen(ctx, os.Stdin, os.Stdout)
 }
@@ -97,14 +96,14 @@ func ServeStdio(ctx context.Context, s *mcpserver.MCPServer) error {
 // ServeSSE starts the server using the SSE transport
 func ServeSSE(ctx context.Context, s *mcpserver.MCPServer, addr string) error {
 	sseServer := mcpserver.NewSSEServer(s)
-	
+
 	// Context function for HTTP
 	httpContextFunc := func(ctx context.Context, req *http.Request) context.Context {
 		return ctx
 	}
-	
+
 	sseServer.SetContextFunc(httpContextFunc)
-	
+
 	// Start the server
 	slog.Info("SSE server listening on " + addr)
 	return sseServer.Start(addr)

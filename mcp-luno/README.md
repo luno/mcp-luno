@@ -22,8 +22,8 @@ This server enables integration with VS Code's Copilot and other MCP-compatible 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/echarrod/luno-mcp
-cd luno-mcp
+git clone https://github.com/echarrod/mcp-luno
+cd mcp-luno
 ```
 
 2. Build the binary:

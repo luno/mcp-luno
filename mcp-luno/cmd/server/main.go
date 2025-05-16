@@ -3,20 +3,18 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/echarrod/luno-mcp/internal/config"
-	"github.com/echarrod/luno-mcp/internal/server"
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/echarrod/mcp-luno/internal/config"
+	"github.com/echarrod/mcp-luno/internal/server"
 )
 
 const (
-	appName    = "luno-mcp"
+	appName    = "mcp-luno"
 	appVersion = "0.1.0"
 )
 
