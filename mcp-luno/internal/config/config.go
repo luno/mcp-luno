@@ -14,6 +14,7 @@ const (
 	// Environment variables
 	EnvLunoAPIKeyID     = "LUNO_API_KEY_ID"
 	EnvLunoAPIKeySecret = "LUNO_API_SECRET"
+	EnvLunoAPIDomain    = "LUNO_API_DOMAIN"
 
 	// Default Luno API domain
 	DefaultLunoDomain = "api.luno.com"
@@ -56,13 +57,22 @@ func Load(domainOverride string) (*Config, error) {
 	fmt.Printf("LUNO_API_SECRET value: %s (length: %d)\n", maskValue(apiKeySecret), len(apiKeySecret))
 
 	if apiKeyID == "" || apiKeySecret == "" {
-		return nil, errors.New("Luno API credentials not found. Please set LUNO_API_KEY_ID and LUNO_API_SECRET environment variables")
+		return nil, errors.New("luno API credentials not found, please set LUNO_API_KEY_ID and LUNO_API_SECRET environment variables")
 	}
 
-	// Set domain - use override if provided, otherwise use default
+	// Set domain - first check command line override, then env var, then default
 	domain := DefaultLunoDomain
+
+	// Check for environment variable override
+	if envDomain := os.Getenv(EnvLunoAPIDomain); envDomain != "" {
+		domain = envDomain
+		fmt.Printf("Using domain from environment variable: %s\n", domain)
+	}
+
+	// Command line override takes precedence if provided
 	if domainOverride != "" {
 		domain = domainOverride
+		fmt.Printf("Using domain from command line: %s\n", domain)
 	}
 
 	// Create Luno client
