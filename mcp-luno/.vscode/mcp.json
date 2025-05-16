@@ -1,0 +1,59 @@
+{
+  "name": "mcp-luno",
+  "displayName": "Luno MCP",
+  "description": "Luno API wrapped as an MCP server",
+  "version": "0.1.0",
+  "publisher": "echarrod",
+  "commands": [
+    {
+      "command": "luno-mcp.install",
+      "title": "Install Luno MCP Server",
+      "category": "VS Code: Install Server"
+    }
+  ],
+  "installDirections": {
+    "env": [
+      {
+        "name": "LUNO_API_KEY_ID",
+        "description": "Luno API Key ID",
+        "required": true
+      },
+      {
+        "name": "LUNO_API_SECRET",
+        "description": "Luno API Secret",
+        "required": true
+      }
+    ],
+    "steps": [
+      {
+        "title": "Clone the repository",
+        "command": "git clone https://github.com/echarrod/mcp-luno.git"
+      },
+      {
+        "title": "Build the binary",
+        "command": "cd luno-mcp && go build -o luno-mcp ./cmd/server"
+      },
+      {
+        "title": "Install the binary",
+        "command": "cd luno-mcp && sudo mv luno-mcp /usr/local/bin/"
+      }
+    ],
+    "configDirections": "Add the following to your settings.json file:\n\n```json\n\"mcp\": {\n  \"servers\": {\n    \"luno\": {\n      \"command\": \"luno-mcp\",\n      \"args\": [],\n      \"env\": {\n        \"LUNO_API_KEY_ID\": \"${env:LUNO_API_KEY_ID}\",\n        \"LUNO_API_SECRET\": \"${env:LUNO_API_SECRET}\"\n      }\n    }\n  }\n}\n```"
+  },
+  "servers": {
+      "github": { // https://github.com/github/github-mcp-server
+        "command": "docker",
+        "args": [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "ghcr.io/github/github-mcp-server"
+        ],
+        "env": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:COPILOT_GITHUB_TOKEN}"
+        }
+      }
+    }
+  }
