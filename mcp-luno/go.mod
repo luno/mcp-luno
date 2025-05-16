@@ -3,6 +3,7 @@ module github.com/echarrod/mcp-luno
 go 1.24
 
 require (
+	github.com/joho/godotenv v1.5.1
 	github.com/luno/luno-go v0.0.33
 	github.com/mark3labs/mcp-go v0.27.1
 )
