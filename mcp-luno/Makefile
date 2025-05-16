@@ -1,4 +1,4 @@
-.PHONY: build test clean run-stdio run-sse docker-build docker-run
+.PHONY: build test clean run-stdio run-sse
 
 # Binary name
 BINARY_NAME=mcp-luno
@@ -23,17 +23,6 @@ run-stdio:
 # Run in SSE mode
 run-sse:
 	go run ./cmd/server --transport sse --sse-address localhost:8080
-
-# Build Docker image
-docker-build:
-	docker build -t mcp-luno:latest .
-
-# Run Docker container
-docker-run:
-	docker run -p 8080:8080 \
-		-e LUNO_API_KEY_ID \
-		-e LUNO_API_SECRET \
-		mcp-luno:latest
 
 # Install the binary to your GOBIN path
 install:

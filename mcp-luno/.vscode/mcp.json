@@ -65,22 +65,5 @@
         "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
       }
     },
-    "luno-docker": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "-e",
-        "LUNO_API_KEY_ID",
-        "-e",
-        "LUNO_API_SECRET",
-        "mcp-luno:latest"
-      ],
-      "env": {
-        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
-        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
-      }
-    }
   }
 }
