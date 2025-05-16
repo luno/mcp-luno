@@ -115,6 +115,7 @@ To integrate with VS Code, add the following to your settings.json file:
 ### Market Data
 - `get_ticker`: Get current ticker information for a trading pair
 - `get_order_book`: Get the order book for a trading pair
+- `list_trades`: List recent trades for a currency pair
 
 ### Account Information
 - `get_balances`: Get balances for all accounts
@@ -149,6 +150,16 @@ Create a limit order to buy 0.001 BTC at 50000 ZAR
 You can ask Copilot to show your transaction history:
 ```
 Show me my recent Bitcoin transactions
+```
+
+### Market Data
+
+You can ask Copilot to show market data:
+```
+Show me recent trades for XBTZAR
+```
+```
+What's the latest price for Bitcoin in ZAR?
 ```
 
 ## Security Considerations
