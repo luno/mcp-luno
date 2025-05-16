@@ -45,12 +45,21 @@ sudo mv luno-mcp /usr/local/bin/
 
 The server requires your Luno API key and secret. These can be obtained from your Luno account settings.
 
+You can do this either by:
+
+1. Shell file
+Either set this through your shell file or terminal with:
 Set the following environment variables:
 
 ```bash
 export LUNO_API_KEY_ID=your_api_key_id
 export LUNO_API_SECRET=your_api_secret
 ```
+
+2. Using an .env file
+Copy the .env.example file and name it .env (this always should be .gitignored), and paste your keys in there.
+
+Depending on your setup, you might need an additional step to load these vars for your application. E.g. https://github.com/joho/godotenv
 
 ### Running the server
 
@@ -86,8 +95,8 @@ To integrate with VS Code, add the following to your settings.json file:
       "command": "mcp-luno",
       "args": [],
       "env": {
-        "LUNO_API_KEY_ID": "your_api_key_id",
-        "LUNO_API_SECRET": "your_api_secret"
+        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
+        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
       }
     }
   }
@@ -102,6 +111,32 @@ To integrate with VS Code, add the following to your settings.json file:
     "luno": {
       "type": "sse",
       "url": "http://localhost:8080/sse"
+    }
+  }
+}
+```
+
+## For Docker Mode
+
+```json
+"mcp": {
+  "servers": {
+    "luno": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e",
+        "LUNO_API_KEY_ID",
+        "-e",
+        "LUNO_API_SECRET",
+        "mcp-luno:latest"
+      ],
+      "env": {
+        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
+        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
+      }
     }
   }
 }
