@@ -67,6 +67,28 @@ echo '{
 }'
 echo ""
 
+# Test the list_trades tool if curl is available
+if command -v curl &> /dev/null; then
+  echo "Testing list_trades tool for XBTZAR pair..."
+  echo ""
+  
+  curl -s -X POST -H "Content-Type: application/json" -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "callTool",
+    "params": {
+      "name": "list_trades",
+      "arguments": {
+        "pair": "XBTZAR"
+      }
+    }
+  }' http://localhost:8080/jsonrpc | json_pp
+  
+  echo ""
+  echo "Tool test complete!"
+  echo ""
+fi
+
 # Wait for user to press a key
 echo "Press any key to stop the server and exit..."
 read -n 1 -s
