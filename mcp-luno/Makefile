@@ -40,7 +40,7 @@ install:
 	go install ./cmd/server
 
 pre-commit:
-    pre-commit install
+	pre-commit install
 
 # Default target
 default: build
