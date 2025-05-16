@@ -2,7 +2,7 @@
   "mcp": {
     "servers": {
       "luno": {
-        "command": "${workspaceFolder}/luno-mcp",
+        "command": "${workspaceFolder}/mcp-luno",
         "args": [],
         "env": {
           "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",

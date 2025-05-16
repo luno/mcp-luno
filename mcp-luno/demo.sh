@@ -19,13 +19,13 @@ echo ""
 
 # Build the server if not already built
 echo "Building Luno MCP Server..."
-go build -o luno-mcp ./cmd/server
+go build -o mcp-luno ./cmd/server
 echo "Build complete!"
 echo ""
 
 # Start the server in the background (SSE mode)
 echo "Starting Luno MCP Server in SSE mode..."
-./luno-mcp --transport sse --sse-address localhost:8080 --log-level debug &
+./mcp-luno --transport sse --sse-address localhost:8080 --log-level debug &
 SERVER_PID=$!
 
 # Wait for server to start
@@ -55,7 +55,7 @@ echo '{
   "mcp": {
     "servers": {
       "luno": {
-        "command": "luno-mcp",
+        "command": "mcp-luno",
         "args": [],
         "env": {
           "LUNO_API_KEY_ID": "your_api_key_id",

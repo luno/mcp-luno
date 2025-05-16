@@ -10,7 +10,7 @@ to your VS Code settings.json file. You can access this file by pressing `Cmd+Sh
 "mcp": {
   "servers": {
     "luno": {
-      "command": "luno-mcp",
+      "command": "mcp-luno",
       "args": [],
       "env": {
         "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
@@ -49,7 +49,7 @@ to your VS Code settings.json file. You can access this file by pressing `Cmd+Sh
         "LUNO_API_KEY_ID",
         "-e",
         "LUNO_API_SECRET",
-        "luno-mcp:latest"
+        "mcp-luno:latest"
       ],
       "env": {
         "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",

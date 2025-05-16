@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/echarrod/luno-mcp/internal/config"
+	"github.com/echarrod/mcp-luno/internal/config"
 	"github.com/luno/luno-go"
 	"github.com/luno/luno-go/decimal"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -14,14 +14,14 @@ import (
 
 // Tool IDs
 const (
-	GetBalancesToolID       = "get_balances"
-	GetTickerToolID         = "get_ticker"
-	GetOrderBookToolID      = "get_order_book"
-	CreateOrderToolID       = "create_order"
-	CancelOrderToolID       = "cancel_order"
-	ListOrdersToolID        = "list_orders"
-	ListTransactionsToolID  = "list_transactions"
-	GetTransactionToolID    = "get_transaction"
+	GetBalancesToolID      = "get_balances"
+	GetTickerToolID        = "get_ticker"
+	GetOrderBookToolID     = "get_order_book"
+	CreateOrderToolID      = "create_order"
+	CancelOrderToolID      = "cancel_order"
+	ListOrdersToolID       = "list_orders"
+	ListTransactionsToolID = "list_transactions"
+	GetTransactionToolID   = "get_transaction"
 )
 
 // ===== Balance Tools =====
