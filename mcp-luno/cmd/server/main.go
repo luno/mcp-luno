@@ -11,6 +11,7 @@ import (
 
 	"github.com/echarrod/mcp-luno/internal/config"
 	"github.com/echarrod/mcp-luno/internal/server"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -19,6 +20,12 @@ const (
 )
 
 func main() {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		// Just log, don't exit - this allows the app to run without .env file
+		log.Println("Warning: No .env file found or unable to load it. Make sure environment variables are set.")
+	}
+
 	// Parse command line flags
 	transportType := flag.String("transport", "stdio", "Transport type (stdio or sse)")
 	sseAddr := flag.String("sse-address", "localhost:8080", "Address for SSE transport")
