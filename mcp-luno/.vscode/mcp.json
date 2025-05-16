@@ -26,21 +26,7 @@
         "required": true
       }
     ],
-    "steps": [
-      {
-        "title": "Clone the repository",
-        "command": "git clone https://github.com/echarrod/mcp-luno.git"
-      },
-      {
-        "title": "Build the binary",
-        "command": "cd mcp-luno && go build -o mcp-luno ./cmd/server"
-      },
-      {
-        "title": "Install the binary",
-        "command": "cd mcp-luno && sudo mv mcp-luno /usr/local/bin/"
-      }
-    ],
-    "configDirections": "Add the following to your settings.json file:\n\n```json\n\"mcp\": {\n  \"servers\": {\n    \"luno\": {\n      \"command\": \"mcp-luno\",\n      \"args\": [],\n      \"env\": {\n        \"LUNO_API_KEY_ID\": \"${env:LUNO_API_KEY_ID}\",\n        \"LUNO_API_SECRET\": \"${env:LUNO_API_SECRET}\"\n      }\n    }\n  }\n}\n```"
+    "configDirections": "Add the following to your settings.json or mcp.json file:\n\n```json\n\"mcp\": {\n  \"servers\": {\n    \"luno\": {\n      \"command\": \"mcp-luno\",\n      \"args\": [],\n      \"env\": {\n        \"LUNO_API_KEY_ID\": \"${env:LUNO_API_KEY_ID}\",\n        \"LUNO_API_SECRET\": \"${env:LUNO_API_SECRET}\"\n      }\n    }\n  }\n}\n```"
   },
   "servers": {
     "github": { // https://github.com/github/github-mcp-server
@@ -57,13 +43,27 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:COPILOT_GITHUB_TOKEN}"
       }
     },
-    "luno": {
+    "mcp-luno": {
       "command": "${workspaceFolder}/mcp-luno",
       "args": [],
       "env": {
-        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
-        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
+        "LUNO_API_KEY_ID": "${input:luno_api_key_id}",
+        "LUNO_API_SECRET": "${input:luno_api_secret}"
       }
+    }
+  },
+  "inputs": [
+    {
+      "id": "luno_api_key_id",
+      "type": "promptString",
+      "description": "Luno API Key ID",
+      "password": true
     },
-  }
+    {
+      "id": "luno_api_secret",
+      "type": "promptString",
+      "description": "Luno API Secret",
+      "password": true
+    }
+  ]
 }
