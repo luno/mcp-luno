@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/echarrod/mcp-luno/internal/config"
 	"github.com/luno/luno-go"
 	"github.com/luno/luno-go/decimal"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
 )
 
 // Tool IDs
@@ -22,6 +24,7 @@ const (
 	ListOrdersToolID       = "list_orders"
 	ListTransactionsToolID = "list_transactions"
 	GetTransactionToolID   = "get_transaction"
+	ListTradesToolID       = "list_trades"
 )
 
 // ===== Balance Tools =====
@@ -35,9 +38,9 @@ func NewGetBalancesTool() mcp.Tool {
 }
 
 // HandleGetBalances handles the get_balances tool
-func HandleGetBalances(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		balances, err := cfg.LunoClient.GetBalances(ctx, &luno.GetBalancesRequest{})
+func HandleGetBalances(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
+		balances, err := cfg.LunoClient.GetBalances(context.Background(), &luno.GetBalancesRequest{})
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to get balances: %v", err)), nil
 		}
@@ -89,14 +92,14 @@ func NewGetTickerTool() mcp.Tool {
 }
 
 // HandleGetTicker handles the get_ticker tool
-func HandleGetTicker(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		pair, ok := request.Params.Arguments["pair"].(string)
+func HandleGetTicker(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
+		pair, ok := arguments["pair"].(string)
 		if !ok || pair == "" {
 			return mcp.NewToolResultError("Trading pair is required"), nil
 		}
 
-		ticker, err := cfg.LunoClient.GetTicker(ctx, &luno.GetTickerRequest{
+		ticker, err := cfg.LunoClient.GetTicker(context.Background(), &luno.GetTickerRequest{
 			Pair: pair,
 		})
 		if err != nil {
@@ -126,14 +129,14 @@ func NewGetOrderBookTool() mcp.Tool {
 }
 
 // HandleGetOrderBook handles the get_order_book tool
-func HandleGetOrderBook(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		pair, ok := request.Params.Arguments["pair"].(string)
+func HandleGetOrderBook(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
+		pair, ok := arguments["pair"].(string)
 		if !ok || pair == "" {
 			return mcp.NewToolResultError("Trading pair is required"), nil
 		}
 
-		orderBook, err := cfg.LunoClient.GetOrderBook(ctx, &luno.GetOrderBookRequest{
+		orderBook, err := cfg.LunoClient.GetOrderBook(context.Background(), &luno.GetOrderBookRequest{
 			Pair: pair,
 		})
 		if err != nil {
@@ -181,25 +184,25 @@ func NewCreateOrderTool() mcp.Tool {
 }
 
 // HandleCreateOrder handles the create_order tool
-func HandleCreateOrder(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
 		// Extract and validate arguments
-		pair, ok := request.Params.Arguments["pair"].(string)
+		pair, ok := arguments["pair"].(string)
 		if !ok || pair == "" {
 			return mcp.NewToolResultError("Trading pair is required"), nil
 		}
 
-		orderType, ok := request.Params.Arguments["type"].(string)
+		orderType, ok := arguments["type"].(string)
 		if !ok || (orderType != "BID" && orderType != "ASK") {
 			return mcp.NewToolResultError("Order type must be 'BID' or 'ASK'"), nil
 		}
 
-		priceStr, ok := request.Params.Arguments["price"].(string)
+		priceStr, ok := arguments["price"].(string)
 		if !ok || priceStr == "" {
 			return mcp.NewToolResultError("Order price is required"), nil
 		}
 
-		volumeStr, ok := request.Params.Arguments["volume"].(string)
+		volumeStr, ok := arguments["volume"].(string)
 		if !ok || volumeStr == "" {
 			return mcp.NewToolResultError("Order volume is required"), nil
 		}
@@ -223,7 +226,7 @@ func HandleCreateOrder(cfg *config.Config) mcp.ToolHandlerFunc {
 			Volume: volumeStr,
 		}
 
-		order, err := cfg.LunoClient.PostOrder(ctx, createReq)
+		order, err := cfg.LunoClient.PostOrder(context.Background(), createReq)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to create order: %v", err)), nil
 		}
@@ -251,14 +254,14 @@ func NewCancelOrderTool() mcp.Tool {
 }
 
 // HandleCancelOrder handles the cancel_order tool
-func HandleCancelOrder(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		orderID, ok := request.Params.Arguments["order_id"].(string)
+func HandleCancelOrder(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
+		orderID, ok := arguments["order_id"].(string)
 		if !ok || orderID == "" {
 			return mcp.NewToolResultError("Order ID is required"), nil
 		}
 
-		result, err := cfg.LunoClient.StopOrder(ctx, &luno.StopOrderRequest{
+		result, err := cfg.LunoClient.StopOrder(context.Background(), &luno.StopOrderRequest{
 			OrderId: orderID,
 		})
 		if err != nil {
@@ -291,15 +294,15 @@ func NewListOrdersTool() mcp.Tool {
 }
 
 // HandleListOrders handles the list_orders tool
-func HandleListOrders(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func HandleListOrders(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
 		var pair string
-		if pairArg, ok := request.Params.Arguments["pair"]; ok {
+		if pairArg, ok := arguments["pair"]; ok {
 			pair, _ = pairArg.(string)
 		}
 
 		limit := 100 // Default limit
-		if limitArg, ok := request.Params.Arguments["limit"]; ok {
+		if limitArg, ok := arguments["limit"]; ok {
 			if limitFloat, ok := limitArg.(float64); ok {
 				limit = int(limitFloat)
 				if limit <= 0 {
@@ -313,7 +316,7 @@ func HandleListOrders(cfg *config.Config) mcp.ToolHandlerFunc {
 			Limit: strconv.Itoa(limit),
 		}
 
-		orders, err := cfg.LunoClient.ListOrders(ctx, listReq)
+		orders, err := cfg.LunoClient.ListOrders(context.Background(), listReq)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list orders: %v", err)), nil
 		}
@@ -355,9 +358,9 @@ func NewListTransactionsTool() mcp.Tool {
 }
 
 // HandleListTransactions handles the list_transactions tool
-func HandleListTransactions(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		accountID, ok := request.Params.Arguments["account_id"].(string)
+func HandleListTransactions(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
+		accountID, ok := arguments["account_id"].(string)
 		if !ok || accountID == "" {
 			return mcp.NewToolResultError("Account ID is required"), nil
 		}
@@ -367,7 +370,7 @@ func HandleListTransactions(cfg *config.Config) mcp.ToolHandlerFunc {
 		}
 
 		// Set limit if provided
-		if limitArg, ok := request.Params.Arguments["limit"]; ok {
+		if limitArg, ok := arguments["limit"]; ok {
 			if limitFloat, ok := limitArg.(float64); ok {
 				limit := int(limitFloat)
 				if limit > 0 {
@@ -377,7 +380,7 @@ func HandleListTransactions(cfg *config.Config) mcp.ToolHandlerFunc {
 		}
 
 		// Set min_row if provided
-		if minRowArg, ok := request.Params.Arguments["min_row"]; ok {
+		if minRowArg, ok := arguments["min_row"]; ok {
 			if minRowFloat, ok := minRowArg.(float64); ok {
 				minRow := int64(minRowFloat)
 				if minRow > 0 {
@@ -387,7 +390,7 @@ func HandleListTransactions(cfg *config.Config) mcp.ToolHandlerFunc {
 		}
 
 		// Set max_row if provided
-		if maxRowArg, ok := request.Params.Arguments["max_row"]; ok {
+		if maxRowArg, ok := arguments["max_row"]; ok {
 			if maxRowFloat, ok := maxRowArg.(float64); ok {
 				maxRow := int64(maxRowFloat)
 				if maxRow > 0 {
@@ -396,7 +399,7 @@ func HandleListTransactions(cfg *config.Config) mcp.ToolHandlerFunc {
 			}
 		}
 
-		transactions, err := cfg.LunoClient.ListTransactions(ctx, listReq)
+		transactions, err := cfg.LunoClient.ListTransactions(context.Background(), listReq)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list transactions: %v", err)), nil
 		}
@@ -429,14 +432,14 @@ func NewGetTransactionTool() mcp.Tool {
 }
 
 // HandleGetTransaction handles the get_transaction tool
-func HandleGetTransaction(cfg *config.Config) mcp.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		accountID, ok := request.Params.Arguments["account_id"].(string)
+func HandleGetTransaction(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
+		accountID, ok := arguments["account_id"].(string)
 		if !ok || accountID == "" {
 			return mcp.NewToolResultError("Account ID is required"), nil
 		}
 
-		transactionID, ok := request.Params.Arguments["transaction_id"].(string)
+		transactionID, ok := arguments["transaction_id"].(string)
 		if !ok || transactionID == "" {
 			return mcp.NewToolResultError("Transaction ID is required"), nil
 		}
@@ -447,7 +450,7 @@ func HandleGetTransaction(cfg *config.Config) mcp.ToolHandlerFunc {
 			Limit: 100, // Use a reasonable limit to find the transaction
 		}
 
-		transactions, err := cfg.LunoClient.ListTransactions(ctx, listReq)
+		transactions, err := cfg.LunoClient.ListTransactions(context.Background(), listReq)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to get transactions: %v", err)), nil
 		}
@@ -468,6 +471,63 @@ func HandleGetTransaction(cfg *config.Config) mcp.ToolHandlerFunc {
 		resultJSON, err := json.MarshalIndent(transaction, "", "  ")
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal transaction: %v", err)), nil
+		}
+
+		return mcp.NewToolResultText(string(resultJSON)), nil
+	}
+}
+
+// ===== Trades Tools =====
+
+// NewListTradesTool creates a new tool for listing trades
+func NewListTradesTool() mcp.Tool {
+	return mcp.NewTool(
+		ListTradesToolID,
+		mcp.WithDescription("List recent trades for a currency pair"),
+		mcp.WithString(
+			"pair",
+			mcp.Required(),
+			mcp.Description("Trading pair (e.g., XBTZAR)"),
+		),
+		mcp.WithString(
+			"since",
+			mcp.Description("Fetch trades executed after this timestamp (Unix milliseconds)"),
+		),
+	)
+}
+
+// HandleListTrades handles the list_trades tool
+func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
+	return func(arguments map[string]interface{}) (*mcp.CallToolResult, error) {
+		pair, ok := arguments["pair"].(string)
+		if !ok || pair == "" {
+			return mcp.NewToolResultError("Trading pair is required"), nil
+		}
+
+		req := &luno.ListTradesRequest{
+			Pair: pair,
+		}
+
+		// Set since timestamp if provided
+		if sinceStr, ok := arguments["since"].(string); ok && sinceStr != "" {
+			// Parse the timestamp string to int64
+			sinceTimestamp, err := strconv.ParseInt(sinceStr, 10, 64)
+			if err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Invalid since timestamp format: %v", err)), nil
+			}
+			// Convert to time.Time then to luno.Time
+			t := time.Unix(0, sinceTimestamp*1e6)
+			req.Since = luno.Time(t)
+		}
+
+		trades, err := cfg.LunoClient.ListTrades(context.Background(), req)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to list trades: %v", err)), nil
+		}
+
+		resultJSON, err := json.MarshalIndent(trades, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal trades: %v", err)), nil
 		}
 
 		return mcp.NewToolResultText(string(resultJSON)), nil
