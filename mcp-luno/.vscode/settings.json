@@ -24,6 +24,6 @@
   "go.testTimeout": "30s",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.organizeImports": true
+    "source.organizeImports": "explicit"
   }
 }
