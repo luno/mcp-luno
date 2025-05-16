@@ -39,5 +39,8 @@ docker-run:
 install:
 	go install ./cmd/server
 
+pre-commit:
+    pre-commit install
+
 # Default target
 default: build
