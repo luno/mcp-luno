@@ -1,16 +1,4 @@
 {
-  "mcp": {
-    "servers": {
-      "luno": {
-        "command": "${workspaceFolder}/mcp-luno",
-        "args": [],
-        "env": {
-          "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
-          "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
-        }
-      }
-    }
-  },
   "go.buildTags": "",
   "go.buildFlags": [],
   "go.lintFlags": [],
@@ -20,7 +8,9 @@
     "coveredHighlightColor": "rgba(64,128,128,0.5)",
     "uncoveredHighlightColor": "rgba(128,64,64,0.25)"
   },
-  "go.testFlags": ["-v"],
+  "go.testFlags": [
+    "-v"
+  ],
   "go.testTimeout": "30s",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
