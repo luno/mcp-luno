@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/echarrod/mcp-luno/internal/config"
@@ -76,7 +75,7 @@ func registerTools(server *mcpserver.MCPServer, cfg *config.Config) {
 
 	getTransactionTool := tools.NewGetTransactionTool()
 	server.AddTool(getTransactionTool, tools.HandleGetTransaction(cfg))
-	
+
 	// Add trades tools
 	listTradesTool := tools.NewListTradesTool()
 	server.AddTool(listTradesTool, tools.HandleListTrades(cfg))
@@ -100,13 +99,6 @@ func ServeStdio(ctx context.Context, s *mcpserver.MCPServer) error {
 // ServeSSE starts the server using the SSE transport
 func ServeSSE(ctx context.Context, s *mcpserver.MCPServer, addr string) error {
 	sseServer := mcpserver.NewSSEServer(s)
-
-	// Context function for HTTP
-	httpContextFunc := func(ctx context.Context, req *http.Request) context.Context {
-		return ctx
-	}
-
-	sseServer.SetContextFunc(httpContextFunc)
 
 	// Start the server
 	slog.Info("SSE server listening on " + addr)
