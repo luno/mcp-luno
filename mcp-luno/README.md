@@ -4,6 +4,9 @@ A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that pr
 
 This server enables integration with VS Code's Copilot and other MCP-compatible clients, providing contextual information and functionality related to the Luno cryptocurrency exchange.
 
+
+[![Install with Docker in VS Code](https://img.shields.io/badge/VS_Code-Install_Luno_MCP-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=luno-mcp&inputs=%5B%7B%22id%22%3A%22luno_key%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Key%20ID%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22luno_secret%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22%24%7BworkspaceFolder%7D%2Fmcp-luno%22%2C%22args%22%3A%5B%5D%2C%22env%22%3A%7B%22LUNO_API_KEY_ID%22%3A%22%24%7Binput%3Aluno_key%7D%22%2C%22LUNO_API_SECRET%22%3A%22%24%7Binput%3Aluno_secret%7D%22%7D%7D)
+
 ## Features
 
 - **Resources**: Access to account balances, transaction history, and more
