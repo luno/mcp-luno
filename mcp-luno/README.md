@@ -80,7 +80,7 @@ To integrate with VS Code, add the following to your settings.json file:
 "mcp": {
   "servers": {
     "luno": {
-      "command": "luno-mcp",
+      "command": "mcp-luno",
       "args": [],
       "env": {
         "LUNO_API_KEY_ID": "your_api_key_id",
