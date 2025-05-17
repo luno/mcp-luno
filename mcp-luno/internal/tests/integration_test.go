@@ -72,8 +72,6 @@ func TestMCPServerWithListOrders(t *testing.T) {
 		t.Fatal("Failed to create MCP server")
 	}
 
-	// Verify the server can handle tools:
-
 	// Get the list_orders tool handler
 	listOrdersHandler := tools.HandleListOrders(cfg)
 
@@ -108,24 +106,6 @@ func TestMCPServerWithListOrders(t *testing.T) {
 	} else if result.IsError {
 		t.Fatalf("List orders tool returned an error")
 	}
-}
-
-// TestMCPServerIntegration tests the full MCP server setup
-func TestMCPServerIntegration(t *testing.T) {
-	// Setup: Load environment and create config
-	cfg, err := setupTestConfig(t)
-	if err != nil {
-		t.Fatalf("Failed to set up config: %v", err)
-	}
-
-	// Create a mock MCP server to test the server setup
-	mcpServer := server.NewMCPServer("mcp-luno-test", "0.1.0", cfg)
-	if mcpServer == nil {
-		t.Fatal("Failed to create MCP server")
-	}
-
-	// Just verify that the server is created with proper configuration
-	t.Log("Successfully created MCP server")
 }
 
 // setupTestConfig loads environment variables and creates a config
