@@ -43,14 +43,14 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:COPILOT_GITHUB_TOKEN}"
       }
     },
-    "mcp-luno": {
-      "command": "${workspaceFolder}/mcp-luno",
-      "args": [],
-      "env": {
-        "LUNO_API_KEY_ID": "${input:luno_api_key_id}",
-        "LUNO_API_SECRET": "${input:luno_api_secret}"
-      }
-    }
+    // "mcp-luno": {
+    //   "command": "${workspaceFolder}/mcp-luno",
+    //   "args": [],
+    //   "env": {
+    //     "LUNO_API_KEY_ID": "${input:luno_api_key_id}",
+    //     "LUNO_API_SECRET": "${input:luno_api_secret}"
+    //   }
+    // }
   },
   "inputs": [
     {
