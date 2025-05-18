@@ -14,6 +14,13 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
+// Error messages
+const (
+	ErrAPICredentialsRequired = "API credentials are required for this operation. Please set LUNO_API_KEY_ID and LUNO_API_SECRET environment variables."
+	ErrTradingPairRequired    = "Trading pair is required"
+	ErrTradingPairDesc        = "Trading pair (e.g., XBTZAR)"
+)
+
 // Tool IDs
 const (
 	GetBalancesToolID      = "get_balances"
@@ -40,6 +47,8 @@ func NewGetBalancesTool() mcp.Tool {
 // HandleGetBalances handles the get_balances tool
 func HandleGetBalances(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Since we're using a private API endpoint, authentication errors will be handled by the API call
+
 		balances, err := cfg.LunoClient.GetBalances(ctx, &luno.GetBalancesRequest{})
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to get balances: %v", err)), nil
@@ -86,7 +95,7 @@ func NewGetTickerTool() mcp.Tool {
 		mcp.WithString(
 			"pair",
 			mcp.Required(),
-			mcp.Description("Trading pair (e.g., XBTZAR)"),
+			mcp.Description(ErrTradingPairDesc),
 		),
 	)
 }
@@ -94,10 +103,10 @@ func NewGetTickerTool() mcp.Tool {
 // HandleGetTicker handles the get_ticker tool
 func HandleGetTicker(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		arguments := request.Params.Arguments // TODO: is this right?
+		arguments := request.Params.Arguments
 		pair, ok := arguments["pair"].(string)
 		if !ok || pair == "" {
-			return mcp.NewToolResultError("Trading pair is required"), nil
+			return mcp.NewToolResultError(ErrTradingPairRequired), nil
 		}
 
 		ticker, err := cfg.LunoClient.GetTicker(ctx, &luno.GetTickerRequest{
@@ -124,7 +133,7 @@ func NewGetOrderBookTool() mcp.Tool {
 		mcp.WithString(
 			"pair",
 			mcp.Required(),
-			mcp.Description("Trading pair (e.g., XBTZAR)"),
+			mcp.Description(ErrTradingPairDesc),
 		),
 	)
 }
@@ -136,7 +145,7 @@ func HandleGetOrderBook(cfg *config.Config) server.ToolHandlerFunc {
 
 		pair, ok := arguments["pair"].(string)
 		if !ok || pair == "" {
-			return mcp.NewToolResultError("Trading pair is required"), nil
+			return mcp.NewToolResultError(ErrTradingPairRequired), nil
 		}
 
 		orderBook, err := cfg.LunoClient.GetOrderBook(ctx, &luno.GetOrderBookRequest{
@@ -190,6 +199,8 @@ func NewCreateOrderTool() mcp.Tool {
 // TODO: Add HandleCreateMarketOrder function for market orders
 func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Since we're using a private API endpoint, authentication errors will be handled by the API call
+
 		arguments := request.Params.Arguments
 		// Extract and validate arguments
 		pair, ok := arguments["pair"].(string)
@@ -269,6 +280,8 @@ func NewCancelOrderTool() mcp.Tool {
 // HandleCancelOrder handles the cancel_order tool
 func HandleCancelOrder(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Since we're using a private API endpoint, authentication errors will be handled by the API call
+
 		arguments := request.Params.Arguments
 		orderID, ok := arguments["order_id"].(string)
 		if !ok || orderID == "" {
@@ -310,6 +323,8 @@ func NewListOrdersTool() mcp.Tool {
 // HandleListOrders handles the list_orders tool
 func HandleListOrders(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Since we're using a private API endpoint, authentication errors will be handled by the API call
+
 		arguments := request.Params.Arguments
 		var pair string
 		if pairArg, ok := arguments["pair"]; ok {
@@ -371,6 +386,8 @@ func NewListTransactionsTool() mcp.Tool {
 // HandleListTransactions handles the list_transactions tool
 func HandleListTransactions(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Since we're using a private API endpoint, authentication errors will be handled by the API call
+
 		arguments := request.Params.Arguments
 		accountIDStr, ok := arguments["account_id"].(string)
 		if !ok || accountIDStr == "" {
@@ -380,15 +397,16 @@ func HandleListTransactions(cfg *config.Config) server.ToolHandlerFunc {
 		// Convert account ID from string to int64
 		accountID, err := strconv.ParseInt(accountIDStr, 10, 64)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Invalid account ID format: %v", err)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("Invalid account ID format: %v. Please provide a valid numeric account ID.", err)), nil
 		}
 
 		listReq := &luno.ListTransactionsRequest{
 			Id: accountID,
 		}
 
-		// Set default MaxRow if not provided
+		// Set default rows
 		listReq.MaxRow = 100 // Default max rows
+		listReq.MinRow = 1   // Default min rows
 
 		// Set min_row if provided
 		if minRowArg, ok := arguments["min_row"]; ok {
@@ -445,6 +463,8 @@ func NewGetTransactionTool() mcp.Tool {
 // HandleGetTransaction handles the get_transaction tool
 func HandleGetTransaction(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Since we're using a private API endpoint, authentication errors will be handled by the API call
+
 		arguments := request.Params.Arguments
 		accountIDStr, ok := arguments["account_id"].(string)
 		if !ok || accountIDStr == "" {
@@ -454,7 +474,7 @@ func HandleGetTransaction(cfg *config.Config) server.ToolHandlerFunc {
 		// Convert account ID from string to int64
 		accountID, err := strconv.ParseInt(accountIDStr, 10, 64)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Invalid account ID format: %v", err)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("Invalid account ID format: %v. Please provide a valid numeric account ID.", err)), nil
 		}
 
 		transactionIDStr, ok := arguments["transaction_id"].(string)
@@ -465,7 +485,7 @@ func HandleGetTransaction(cfg *config.Config) server.ToolHandlerFunc {
 		// Attempt to convert transaction ID to int64 for comparison
 		transactionID, err := strconv.ParseInt(transactionIDStr, 10, 64)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Invalid transaction ID format: %v", err)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("Invalid transaction ID format: %v. Please provide a valid numeric transaction ID.", err)), nil
 		}
 
 		// Get the list of transactions with MinRow and MaxRow
@@ -512,7 +532,7 @@ func NewListTradesTool() mcp.Tool {
 		mcp.WithString(
 			"pair",
 			mcp.Required(),
-			mcp.Description("Trading pair (e.g., XBTZAR)"),
+			mcp.Description(ErrTradingPairDesc),
 		),
 		mcp.WithString(
 			"since",
@@ -527,7 +547,7 @@ func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 		arguments := request.Params.Arguments
 		pair, ok := arguments["pair"].(string)
 		if !ok || pair == "" {
-			return mcp.NewToolResultError("Trading pair is required"), nil
+			return mcp.NewToolResultError(ErrTradingPairRequired), nil
 		}
 
 		req := &luno.ListTradesRequest{
