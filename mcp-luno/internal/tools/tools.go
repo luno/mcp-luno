@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/echarrod/mcp-luno/internal/config"
@@ -109,11 +110,17 @@ func HandleGetTicker(cfg *config.Config) server.ToolHandlerFunc {
 			return mcp.NewToolResultError(ErrTradingPairRequired), nil
 		}
 
+		// Normalize currency pair
+		pair = normalizeCurrencyPair(pair)
+
 		ticker, err := cfg.LunoClient.GetTicker(ctx, &luno.GetTickerRequest{
 			Pair: pair,
 		})
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to get ticker: %v", err)), nil
+			suggestedPairs := getSuggestedTradingPairs()
+			errorMsg := fmt.Sprintf("Failed to get ticker: %v\n\nCommon trading pairs on Luno: %s",
+				err, suggestedPairs)
+			return mcp.NewToolResultError(errorMsg), nil
 		}
 
 		resultJSON, err := json.MarshalIndent(ticker, "", "  ")
@@ -148,11 +155,17 @@ func HandleGetOrderBook(cfg *config.Config) server.ToolHandlerFunc {
 			return mcp.NewToolResultError(ErrTradingPairRequired), nil
 		}
 
+		// Normalize currency pair
+		pair = normalizeCurrencyPair(pair)
+
 		orderBook, err := cfg.LunoClient.GetOrderBook(ctx, &luno.GetOrderBookRequest{
 			Pair: pair,
 		})
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to get order book: %v", err)), nil
+			suggestedPairs := getSuggestedTradingPairs()
+			errorMsg := fmt.Sprintf("Failed to get order book: %v\n\nCommon trading pairs on Luno: %s",
+				err, suggestedPairs)
+			return mcp.NewToolResultError(errorMsg), nil
 		}
 
 		resultJSON, err := json.MarshalIndent(orderBook, "", "  ")
@@ -205,7 +218,28 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 		// Extract and validate arguments
 		pair, ok := arguments["pair"].(string)
 		if !ok || pair == "" {
-			return mcp.NewToolResultError("Trading pair is required"), nil
+			// If no pair is provided, return a list of working pairs
+			workingPairs := GetWorkingPairs()
+			errorMsg := fmt.Sprintf("Trading pair is required. Please use one of these known working pairs: %s",
+				strings.Join(workingPairs, ", "))
+			return mcp.NewToolResultError(errorMsg), nil
+		}
+
+		// Log original pair for debugging
+		fmt.Printf("Original pair before normalization: %s\n", pair)
+
+		// Normalize the pair - this should handle BTC->XBT conversion automatically
+		pair = normalizeCurrencyPair(pair)
+		fmt.Printf("Final normalized pair: %s\n", pair)
+
+		// Validate the trading pair with our improved validation function
+		isValid, errorMsg, suggestions := ValidatePair(ctx, cfg, pair)
+		if !isValid {
+			// If invalid, show a helpful error message with suggestions
+			suggestionsStr := strings.Join(suggestions, ", ")
+			pairErrorMsg := fmt.Sprintf("Invalid trading pair: %s\n\n%s\n\nPlease try one of these working pairs: %s",
+				pair, errorMsg, suggestionsStr)
+			return mcp.NewToolResultError(pairErrorMsg), nil
 		}
 
 		orderType, ok := arguments["type"].(string)
@@ -242,6 +276,14 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 			lunoOrderType = luno.OrderTypeAsk
 		}
 
+		// Get market info - we already validated the pair, but this provides additional info
+		marketInfo := GetMarketInfo(ctx, cfg, pair)
+		fmt.Println(marketInfo)
+
+		// Log the request parameters for debugging
+		fmt.Printf("Creating order with parameters: Pair=%s, Type=%s, Volume=%s, Price=%s\n",
+			pair, lunoOrderType, volumeDec.String(), priceDec.String())
+
 		// Create the limit order
 		createReq := &luno.PostLimitOrderRequest{
 			Pair:   pair,
@@ -252,15 +294,24 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 
 		order, err := cfg.LunoClient.PostLimitOrder(ctx, createReq)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to create limit order: %v", err)), nil
+			// If the order fails despite our validation, provide detailed error information
+			errorMsg := fmt.Sprintf("Failed to create limit order: %v\n\n"+
+				"Here's what we know about this market:\n%s\n\n"+
+				"This may be due to insufficient balance, market conditions, or API limits.",
+				err, marketInfo)
+
+			return mcp.NewToolResultError(errorMsg), nil
 		}
 
+		// Order succeeded
 		resultJSON, err := json.MarshalIndent(order, "", "  ")
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal order result: %v", err)), nil
 		}
 
-		return mcp.NewToolResultText(string(resultJSON)), nil
+		successMsg := fmt.Sprintf("Order created successfully!\n\n%s\n\n%s",
+			string(resultJSON), marketInfo)
+		return mcp.NewToolResultText(successMsg), nil
 	}
 }
 
@@ -550,6 +601,9 @@ func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 			return mcp.NewToolResultError(ErrTradingPairRequired), nil
 		}
 
+		// Normalize currency pair
+		pair = normalizeCurrencyPair(pair)
+
 		req := &luno.ListTradesRequest{
 			Pair: pair,
 		}
@@ -568,7 +622,10 @@ func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 
 		trades, err := cfg.LunoClient.ListTrades(ctx, req)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to list trades: %v", err)), nil
+			suggestedPairs := getSuggestedTradingPairs()
+			errorMsg := fmt.Sprintf("Failed to list trades: %v\n\nCommon trading pairs on Luno: %s",
+				err, suggestedPairs)
+			return mcp.NewToolResultError(errorMsg), nil
 		}
 
 		resultJSON, err := json.MarshalIndent(trades, "", "  ")
@@ -578,4 +635,65 @@ func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 
 		return mcp.NewToolResultText(string(resultJSON)), nil
 	}
+}
+
+// ===== Helper Functions =====
+
+// normalizeCurrencyPair converts common currency pair formats to Luno's expected format
+func normalizeCurrencyPair(pair string) string {
+	// Log input for debugging
+	originalPair := pair
+
+	// Remove any separators that might be in the pair
+	pair = strings.Replace(pair, "-", "", -1)
+	pair = strings.Replace(pair, "_", "", -1)
+	pair = strings.Replace(pair, "/", "", -1)
+	pair = strings.ToUpper(pair)
+
+	// Apply currency code standardization
+	// Known mappings between common symbols and Luno's expected format
+	currencyMappings := map[string]string{
+		"BTC":     "XBT", // Bitcoin is XBT on Luno
+		"BITCOIN": "XBT",
+		// Add other mappings if needed in the future
+	}
+
+	// Apply all mappings
+	for common, luno := range currencyMappings {
+		pair = strings.Replace(pair, common, luno, -1)
+	}
+
+	// Log the normalization for debugging
+	fmt.Printf("Normalized pair: %s -> %s\n", originalPair, pair)
+
+	return pair
+}
+
+// getSuggestedTradingPairs returns a string with common Luno trading pairs
+func getSuggestedTradingPairs() string {
+	// Dynamic generation of trading pairs
+	// Define base currencies and fiat currencies
+	baseCurrencies := []string{"XBT", "ETH", "XRP", "LTC", "BCH"}
+	fiatCurrencies := []string{"ZAR", "NGN", "GBP", "EUR", "USD", "MYR", "IDR", "UGX"}
+
+	// Generate all possible combinations
+	var pairs []string
+
+	// Base/fiat pairs (most common)
+	for _, base := range baseCurrencies {
+		for _, fiat := range fiatCurrencies {
+			// Not all combinations exist, but including most common ones
+			if base == "XBT" || // XBT pairs with all fiats
+				(base == "ETH" && (fiat == "ZAR" || fiat == "NGN" || fiat == "GBP" ||
+					fiat == "EUR" || fiat == "USD" || fiat == "MYR" || fiat == "IDR")) {
+				pairs = append(pairs, base+fiat)
+			}
+		}
+	}
+
+	// Add crypto-to-crypto pairs
+	cryptoCryptoPairs := []string{"ETHXBT", "XRPXBT", "LTCXBT", "BCHXBT"}
+	pairs = append(pairs, cryptoCryptoPairs...)
+
+	return strings.Join(pairs, ", ")
 }
