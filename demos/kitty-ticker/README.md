@@ -1,8 +1,13 @@
 # Model Context Party - Crypto Cat Tickers
 
+Prompt used:
+``` markdown
+#new  a slick website with React showing a live ticker using #get_ticker for the 5 most popular currency pairs in South Africa. Include a different cat picture for each currency pair, and display it against it. Have "Model Context Party" as the title, and make the website look fun.
+```
+
 A fun and playful React application showing live cryptocurrency tickers for the 5 most popular currency pairs in South Africa, each paired with adorable cat images.
 
-![Model Context Party Screenshot](https://placekitten.com/800/400)
+![Model Context Party Screenshot](image.png)
 
 ## Features
 
