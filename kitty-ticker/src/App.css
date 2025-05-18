@@ -1,0 +1,41 @@
+#root {
+  width: 100%;
+  min-height: 100vh;
+  text-align: center;
+}
+
+/* Fun confetti animation for the party theme */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background-color: #f0f;
+  animation: confetti-fall 10s linear infinite;
+  z-index: -1;
+}
+
+.confetti:nth-child(2n) {
+  background-color: #0ff;
+  animation-duration: 7s;
+}
+
+.confetti:nth-child(3n) {
+  background-color: #ff0;
+  animation-duration: 8s;
+}
+
+.confetti:nth-child(4n) {
+  background-color: #0f0;
+  animation-duration: 9s;
+}
