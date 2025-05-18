@@ -48,6 +48,10 @@ func registerResources(server *mcpserver.MCPServer, cfg *config.Config) {
 
 // registerTools registers all tools with the MCP server
 func registerTools(server *mcpserver.MCPServer, cfg *config.Config) {
+	// Initialize trading pair discovery to improve robustness
+	slog.Info("Initializing trading pair discovery...")
+	tools.InitializePairDiscovery(context.Background(), cfg)
+
 	// Add balance tools
 	balancesTool := tools.NewGetBalancesTool()
 	server.AddTool(balancesTool, tools.HandleGetBalances(cfg))
@@ -79,6 +83,10 @@ func registerTools(server *mcpserver.MCPServer, cfg *config.Config) {
 	// Add trades tools
 	listTradesTool := tools.NewListTradesTool()
 	server.AddTool(listTradesTool, tools.HandleListTrades(cfg))
+
+	// Add validation tools
+	validatePairTool := tools.NewValidatePairTool()
+	server.AddTool(validatePairTool, tools.HandleValidatePair(cfg))
 }
 
 // ServeStdio starts the server using the Stdio transport
