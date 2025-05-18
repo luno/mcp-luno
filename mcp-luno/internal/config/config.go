@@ -22,15 +22,8 @@ const (
 
 // Config holds the configuration for the application
 type Config struct {
-	// Luno API credentials
-	LunoAPIKeyID     string
-	LunoAPIKeySecret string
-
 	// Luno client
 	LunoClient *luno.Client
-
-	// Luno API domain
-	LunoDomain string
 }
 
 // Mask a string to show only the first 4 characters and replace the rest with asterisks
@@ -84,11 +77,9 @@ func Load(domainOverride string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to set Luno API credentials: %w", err)
 	}
+	client.SetDebug(true) // TODO: Remove when we don't need anymore
 	return &Config{
-		LunoAPIKeyID:     apiKeyID,
-		LunoAPIKeySecret: apiKeySecret,
-		LunoClient:       client,
-		LunoDomain:       domain,
+		LunoClient: client,
 	}, nil
 }
 
