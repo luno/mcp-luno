@@ -12,14 +12,24 @@ import (
 )
 
 // NewMCPServer creates a new MCP server
-func NewMCPServer(name, version string, cfg *config.Config) *mcpserver.MCPServer {
+func NewMCPServer(name, version string, cfg *config.Config, hooks ...*mcpserver.Hooks) *mcpserver.MCPServer {
+	// Prepare options for the server
+	options := []mcpserver.ServerOption{
+		mcpserver.WithResourceCapabilities(true, true),
+		mcpserver.WithToolCapabilities(true),
+		mcpserver.WithLogging(),
+	}
+
+	// Add hooks if provided
+	for _, hook := range hooks {
+		options = append(options, mcpserver.WithHooks(hook))
+	}
+
 	// Create server with capabilities
 	server := mcpserver.NewMCPServer(
 		name,
 		version,
-		mcpserver.WithResourceCapabilities(true, true),
-		mcpserver.WithToolCapabilities(true),
-		mcpserver.WithLogging(),
+		options...,
 	)
 
 	// Register resources

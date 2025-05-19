@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -223,14 +224,12 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 			errorMsg := fmt.Sprintf("Trading pair is required. Please use one of these known working pairs: %s",
 				strings.Join(workingPairs, ", "))
 			return mcp.NewToolResultError(errorMsg), nil
-		}
-
-		// Log original pair for debugging
-		fmt.Printf("Original pair before normalization: %s\n", pair)
+		} // Log original pair for debugging
+		slog.Debug("Processing trading pair", "originalPair", pair)
 
 		// Normalize the pair - this should handle BTC->XBT conversion automatically
 		pair = normalizeCurrencyPair(pair)
-		fmt.Printf("Final normalized pair: %s\n", pair)
+		slog.Debug("Normalized trading pair", "originalPair", pair, "normalizedPair", pair)
 
 		// Validate the trading pair with our improved validation function
 		isValid, errorMsg, suggestions := ValidatePair(ctx, cfg, pair)
@@ -281,8 +280,11 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 		fmt.Println(marketInfo)
 
 		// Log the request parameters for debugging
-		fmt.Printf("Creating order with parameters: Pair=%s, Type=%s, Volume=%s, Price=%s\n",
-			pair, lunoOrderType, volumeDec.String(), priceDec.String())
+		slog.Info("Creating order",
+			"pair", pair,
+			"type", lunoOrderType,
+			"volume", volumeDec.String(),
+			"price", priceDec.String())
 
 		// Create the limit order
 		createReq := &luno.PostLimitOrderRequest{
@@ -664,7 +666,7 @@ func normalizeCurrencyPair(pair string) string {
 	}
 
 	// Log the normalization for debugging
-	fmt.Printf("Normalized pair: %s -> %s\n", originalPair, pair)
+	slog.Debug("Currency pair normalization", "original", originalPair, "normalized", pair)
 
 	return pair
 }
