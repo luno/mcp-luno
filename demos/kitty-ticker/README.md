@@ -7,7 +7,7 @@ Prompt used:
 
 A fun and playful React application showing live cryptocurrency tickers for the 5 most popular currency pairs in South Africa, each paired with adorable cat images.
 
-![Model Context Party Screenshot](image.png)
+![Model Context Party Screenshot](screenshot.png)
 
 ## Features
 
