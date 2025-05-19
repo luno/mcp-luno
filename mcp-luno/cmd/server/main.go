@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/echarrod/mcp-luno/internal/config"
+	"github.com/echarrod/mcp-luno/internal/logging"
 	"github.com/echarrod/mcp-luno/internal/server"
 	"github.com/joho/godotenv"
 )
@@ -51,10 +52,10 @@ func main() {
 	logLevel := flag.String("log-level", "info", "Log level (debug, info, warn, error)")
 	flag.Parse()
 
-	// Set up logger
+	// Set up basic logger first
 	level := parseLogLevel(*logLevel)
-	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})
-	logger := slog.New(handler)
+	consoleHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})
+	logger := slog.New(consoleHandler)
 	slog.SetDefault(logger)
 
 	// Load configuration
@@ -63,8 +64,14 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Create MCP server
-	mcpServer := server.NewMCPServer(appName, appVersion, cfg)
+	// Create MCP server with logging hooks
+	mcpServer := server.NewMCPServer(appName, appVersion, cfg, logging.MCPHooks())
+
+	// Now enhance the logger with MCP notification capability
+	mcpHandler := logging.NewMCPNotificationHandler(mcpServer, level)
+	multiHandler := logging.NewMultiHandler(consoleHandler, mcpHandler)
+	enhancedLogger := slog.New(multiHandler)
+	slog.SetDefault(enhancedLogger)
 
 	// Setup signal handling for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())

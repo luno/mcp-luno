@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/echarrod/mcp-luno/internal/config"
@@ -30,7 +31,8 @@ func InitializePairDiscovery(ctx context.Context, cfg *config.Config) {
 	// Launch discovery in background to avoid slowing down startup
 	go func() {
 		pairs := DiscoverAvailablePairs(context.Background(), cfg, false)
-		fmt.Printf("Background pair discovery complete. Found %d valid pairs.\n", len(pairs))
+		// Use slog instead of fmt.Printf to ensure proper message handling
+		slog.Info("Background pair discovery complete", "count", len(pairs))
 
 		// Update cache with discovered pairs
 		for _, pair := range pairs {
@@ -64,14 +66,16 @@ func DiscoverAvailablePairs(ctx context.Context, cfg *config.Config, includeErro
 		tryPairs = append(tryPairs, coin+"XBT")
 	}
 
-	fmt.Println("Attempting to discover valid trading pairs...")
+	slog.Info("Attempting to discover valid trading pairs")
 
 	// Try each pair against the ticker API
 	for _, pair := range tryPairs {
 		ticker, err := cfg.LunoClient.GetTicker(ctx, &luno.GetTickerRequest{Pair: pair})
 		if err == nil && ticker != nil {
 			validPairs = append(validPairs, pair)
-			fmt.Printf("Found valid pair: %s (Last trade price: %s)\n", pair, ticker.LastTrade.String())
+			slog.Debug("Found valid trading pair",
+				"pair", pair,
+				"lastTradePrice", ticker.LastTrade.String())
 
 			// Update the cache
 			validPairsCache[pair] = true
@@ -81,11 +85,11 @@ func DiscoverAvailablePairs(ctx context.Context, cfg *config.Config, includeErro
 				discoveredPairsCache = append(discoveredPairsCache, pair)
 			}
 		} else if includeErrors {
-			fmt.Printf("Invalid pair: %s (%v)\n", pair, err)
+			slog.Debug("Invalid trading pair", "pair", pair, "error", err)
 		}
 	}
 
-	fmt.Printf("Discovery complete. Found %d valid trading pairs.\n", len(validPairs))
+	slog.Info("Trading pair discovery complete", "count", len(validPairs))
 	return validPairs
 }
 
