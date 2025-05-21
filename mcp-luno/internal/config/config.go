@@ -43,8 +43,8 @@ func Load(domainOverride string) (*Config, error) {
 	// }
 	// fmt.Println("*** End Environment Variables Debug ***")
 
-	apiKeyID := os.Getenv(EnvLunoAPIKeyID)
-	apiKeySecret := os.Getenv(EnvLunoAPIKeySecret)
+	apiKeyID := os.Getenv(strings.TrimSpace(EnvLunoAPIKeyID))
+	apiKeySecret := os.Getenv(strings.TrimSpace(EnvLunoAPIKeySecret))
 
 	fmt.Printf("LUNO_API_KEY_ID value: %s (length: %d)\n", maskValue(apiKeyID), len(apiKeyID))
 	fmt.Printf("LUNO_API_SECRET value: %s (length: %d)\n", maskValue(apiKeySecret), len(apiKeySecret))
