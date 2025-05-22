@@ -57,7 +57,7 @@ func Load(domainOverride string) (*Config, error) {
 	domain := DefaultLunoDomain
 
 	// Check for environment variable override
-	if envDomain := os.Getenv(EnvLunoAPIDomain); envDomain != "" {
+	if envDomain := os.Getenv(strings.TrimSpace(EnvLunoAPIDomain)); envDomain != "" {
 		domain = envDomain
 		fmt.Printf("Using domain from environment variable: %s\n", domain)
 	}
