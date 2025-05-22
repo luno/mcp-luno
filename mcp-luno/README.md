@@ -120,34 +120,19 @@ To integrate with VS Code, add the following to your settings.json file (or clic
 }
 ```
 
-## Available Resources
-
-- `luno://wallets`: List all wallets/balances in your Luno account
-- `luno://transactions`: List recent transactions
-- `luno://accounts/{id}`: Get details for a specific account by ID
-
 ## Available Tools
 
-### Market Data
-
-- `get_ticker`: Get current ticker information for a trading pair
-- `get_order_book`: Get the order book for a trading pair
-- `list_trades`: List recent trades for a currency pair
-
-### Account Information
-
-- `get_balances`: Get balances for all accounts
-
-### Trading
-
-- `create_order`: Create a new buy or sell order
-- `cancel_order`: Cancel an existing order
-- `list_orders`: List open orders
-
-### Transactions
-
-- `list_transactions`: List transactions for an account
-- `get_transaction`: Get details of a specific transaction
+| Tool                | Category            | Description                                       |
+| ------------------- | ------------------- | ------------------------------------------------- |
+| `get_ticker`        | Market Data         | Get current ticker information for a trading pair |
+| `get_order_book`    | Market Data         | Get the order book for a trading pair             |
+| `list_trades`       | Market Data         | List recent trades for a currency pair            |
+| `get_balances`      | Account Information | Get balances for all accounts                     |
+| `create_order`      | Trading             | Create a new buy or sell order                    |
+| `cancel_order`      | Trading             | Cancel an existing order                          |
+| `list_orders`       | Trading             | List open orders                                  |
+| `list_transactions` | Transactions        | List transactions for an account                  |
+| `get_transaction`   | Transactions        | Get details of a specific transaction             |
 
 ## Examples
 
