@@ -25,7 +25,6 @@ func main() {
 	envPaths := []string{
 		".env",    // Current directory
 		"../.env", // Parent directory
-		"/Users/ed/dev/hackathon/model-context-party/mcp-luno/.env", // Absolute path
 	}
 
 	envLoaded := false
