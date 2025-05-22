@@ -79,3 +79,15 @@ When working with:
 - Authentication: securely handle API keys and secrets
 - Market data: format and present data in a user-friendly way
 - Tools: follow the MCP tool patterns and provide helpful error messages
+
+## Git
+
+- Branch naming should follow the pattern `<name>-<issue number>-<description>`, for example:
+  - `john-123-addDebugLogging`
+  - `jane-456-UpdateEnvVarParsing`
+- Always do a `git pull` before creating a new branch to ensure you have the latest changes
+- Commit messages should follow the format `"<prefix>: <Capital description>"` in present tense, where:
+  - The prefix follows the pattern `{package}/{optional_subpackage}` describing the part of the code you are changing
+  - Examples: `"config: Trim spaces when parsing env vars"`, `"logging: Use mcp logging package so it's not interpreted as errors`
+  - The description starts with a capital letter and uses present tense
+- Merge request titles should include the package that's changed and a short description of the change, similar to the commit messages
