@@ -1,5 +1,13 @@
 # Luno MCP Server
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=luno_luno-mcp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=luno_luno-mcp)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=luno_luno-mcp&metric=bugs)](https://sonarcloud.io/summary/new_code?id=luno_luno-mcp)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=luno_luno-mcp&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=luno_luno-mcp)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=luno_luno-mcp&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=luno_luno-mcp)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=luno_luno-mcp&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=luno_luno-mcp)
+[![Go Report Card](https://goreportcard.com/badge/github.com/luno/luno-mcp)](https://goreportcard.com/report/github.com/luno/luno-mcp)
+[![GoDoc](https://godoc.org/github.com/luno/luno-mcp?status.svg)](https://godoc.org/github.com/luno/luno-mcp)
+
 A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that provides access to the Luno cryptocurrency exchange API.
 
 This server enables integration with VS Code's Copilot and other MCP-compatible clients, providing contextual information and functionality related to the Luno cryptocurrency exchange.
