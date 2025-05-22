@@ -1,0 +1,39 @@
+name: Manual Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test-pattern:
+        description: 'Integration test pattern to run (e.g., "ListOrders")'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    environment: integration
+    env:
+      LUNO_API_KEY: ${{ secrets.LUNO_API_KEY }}
+      LUNO_API_SECRET: ${{ secrets.LUNO_API_SECRET }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        cache: true
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Run specific integration tests
+      if: inputs.test-pattern != ''
+      run: go test -v ./internal/tests -run "${{ inputs.test-pattern }}" -skip=""
+
+    - name: Run all integration tests
+      if: inputs.test-pattern == ''
+      run: go test -v ./internal/tests -run "Integration" -skip=""

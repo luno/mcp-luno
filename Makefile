@@ -7,9 +7,17 @@ BINARY_NAME=mcp-luno
 build:
 	go build -o $(BINARY_NAME) ./cmd/server
 
-# Run tests
+# Run all tests
 test:
 	go test ./...
+
+# Run unit tests only
+test-unit:
+	go test -v ./... -short
+
+# Run integration tests (needs API credentials)
+test-integration:
+	go test -v ./internal/tests -run "Integration" -skip=""
 
 # Clean build files
 clean:
