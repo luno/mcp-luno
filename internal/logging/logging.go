@@ -107,12 +107,12 @@ func (h *MCPNotificationHandler) Handle(ctx context.Context, record slog.Record)
 	message := record.Message
 
 	// Create a logging message notification using the MCP helper function
-	notification := mcp.NewLoggingMessageNotification(level, "mcp-luno", message)
+	notification := mcp.NewLoggingMessageNotification(level, "luno-mcp", message)
 
 	// Send the notification to all clients - need to create a map to pass the params correctly
 	h.s.SendNotificationToAllClients(notification.Method, map[string]any{
 		"level":  string(level),
-		"logger": "mcp-luno",
+		"logger": "luno-mcp",
 		"data":   message,
 	})
 

@@ -1,7 +1,7 @@
 .PHONY: build test clean run-stdio run-sse
 
 # Binary name
-BINARY_NAME=mcp-luno
+BINARY_NAME=luno-mcp
 
 # Build the application
 build:

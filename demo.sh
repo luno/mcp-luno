@@ -19,17 +19,17 @@ echo ""
 
 # Build the server if not already built
 echo "Building Luno MCP Server..."
-go build -o mcp-luno ./cmd/server
+go build -o luno-mcp ./cmd/server
 echo "Build complete!"
 echo ""
 
 # Start the server in the background (SSE mode)
 # echo "Starting Luno MCP Server in SSE mode..."
-# ./mcp-luno --transport sse --sse-address localhost:8080 --log-level debug &
+# ./luno-mcp --transport sse --sse-address localhost:8080 --log-level debug &
 
 # Start the server in the background
 echo "Starting Luno MCP Server in stdio mode..."
-./mcp-luno --log-level debug &
+./luno-mcp --log-level debug &
 
 SERVER_PID=$!
 

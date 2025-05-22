@@ -8,9 +8,9 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/luno/luno-go"
-	"github.com/luno/mcp-luno/internal/config"
-	"github.com/luno/mcp-luno/internal/server"
-	"github.com/luno/mcp-luno/internal/tools"
+	"github.com/luno/luno-mcp/internal/config"
+	"github.com/luno/luno-mcp/internal/server"
+	"github.com/luno/luno-mcp/internal/tools"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -67,7 +67,7 @@ func TestMCPServerWithListOrders(t *testing.T) {
 	}
 
 	// Create MCP server and register tools
-	mcpServer := server.NewMCPServer("mcp-luno-test", "0.1.0", cfg)
+	mcpServer := server.NewMCPServer("luno-mcp-test", "0.1.0", cfg)
 
 	// Verify the server was created successfully
 	if mcpServer == nil {
