@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/echarrod/mcp-luno/internal/config"
 	"github.com/luno/luno-go"
+	"github.com/luno/mcp-luno/internal/config"
 )
 
 // Cache of validated pairs to avoid repeated API calls

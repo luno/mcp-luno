@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/echarrod/mcp-luno/internal/config"
 	"github.com/luno/luno-go"
+	"github.com/luno/mcp-luno/internal/config"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )

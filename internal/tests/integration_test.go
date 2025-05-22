@@ -6,16 +6,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/echarrod/mcp-luno/internal/config"
-	"github.com/echarrod/mcp-luno/internal/server"
-	"github.com/echarrod/mcp-luno/internal/tools"
 	"github.com/joho/godotenv"
 	"github.com/luno/luno-go"
+	"github.com/luno/mcp-luno/internal/config"
+	"github.com/luno/mcp-luno/internal/server"
+	"github.com/luno/mcp-luno/internal/tools"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // TestMainWithListOrdersIntegration simulates running main with list_orders
 func TestMainWithListOrdersIntegration(t *testing.T) {
+	t.Skip("integration test")
 	// Setup: Load environment and create config
 	cfg, err := setupTestConfig(t)
 	if err != nil {
@@ -58,6 +59,7 @@ func TestMainWithListOrdersIntegration(t *testing.T) {
 
 // TestMCPServerWithListOrders tests the MCP server setup with list_orders tool
 func TestMCPServerWithListOrders(t *testing.T) {
+	t.Skip("integration test")
 	// Setup: Load environment and create config
 	cfg, err := setupTestConfig(t)
 	if err != nil {

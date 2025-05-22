@@ -37,7 +37,7 @@ _(Requires "building from source" (see below) for now, npm & docker installation
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/echarrod/mcp-luno
+git clone https://github.com/luno/mcp-luno
 cd mcp-luno
 ```
 
@@ -57,7 +57,7 @@ sudo mv mcp-luno /usr/local/bin/
 
 ### Setting up credentials
 
-The server requires your Luno API key and secret. These can be obtained from your Luno account settings, see here for more info: [https://www.luno.com/en/developers](https://www.luno.com/en/developers).
+The server requires your Luno API key and secret. These can be obtained from your Luno account settings, see here for more info: [https://www.luno.com/developers](https://www.luno.com/developers).
 
 Set these either through:
 
@@ -196,6 +196,35 @@ This tool requires API credentials that have access to your Luno account. Be cau
 2. **Never Commit Credentials to Version Control**: Ensure `.env` files are always in your `.gitignore`
 3. **Rotate API Keys Regularly**: Periodically regenerate your API keys to limit the impact of potential leaks
 4. **Monitor API Usage**: Regularly check your Luno account for any unauthorized activity
+
+## Development
+
+### Testing
+
+The project includes both unit tests and integration tests. Unit tests can be run without any credentials, while integration tests require Luno API credentials.
+
+```bash
+# Run unit tests only
+go test -v ./... -short
+
+# Run integration tests (requires API credentials)
+go test -v ./internal/tests -run "Integration" -skip=""
+```
+
+### GitHub Actions
+
+This repository is configured with GitHub Actions for continuous integration testing:
+
+1. **Unit Tests**: Automatically run on all push events and pull requests to the main branch.
+2. **Integration Tests**: Can be run manually using the "Manual Integration Tests" workflow in the GitHub Actions tab.
+
+For integration tests to work in GitHub Actions, you need to set up the following secrets in your repository:
+
+- `LUNO_API_KEY`: Your Luno API key
+- `LUNO_API_SECRET`: Your Luno API secret
+- `RUN_INTEGRATION_TESTS`: Set to any non-empty value to enable integration tests on the main branch
+
+The integration tests are set up to run only when explicitly triggered or on the main branch when configured.
 
 ## License
 

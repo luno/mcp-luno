@@ -9,10 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/echarrod/mcp-luno/internal/config"
-	"github.com/echarrod/mcp-luno/internal/logging"
-	"github.com/echarrod/mcp-luno/internal/server"
 	"github.com/joho/godotenv"
+	"github.com/luno/mcp-luno/internal/config"
+	"github.com/luno/mcp-luno/internal/logging"
+	"github.com/luno/mcp-luno/internal/server"
 )
 
 const (
