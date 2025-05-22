@@ -2,61 +2,31 @@ name: Go Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  unit-tests:
-    name: Unit Tests
+  tests:
+    name: Go Tests
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        go-version: ["1.23", "1.24"]
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-        cache: true
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
 
-    - name: Install dependencies
-      run: go mod download
+      - name: Install dependencies
+        run: go mod download
 
-    - name: Run unit tests
-      run: go test -v ./... -short
-
-  integration-tests:
-    name: Integration Tests
-    needs: unit-tests
-    runs-on: ubuntu-latest
-    # Only run integration tests if explicitly triggered by workflow_dispatch or if LUNO_API_KEY is set in repo secrets
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    environment: integration
-    env:
-      LUNO_API_KEY: ${{ secrets.LUNO_API_KEY }}
-      LUNO_API_SECRET: ${{ secrets.LUNO_API_SECRET }}
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-        cache: true
-
-    - name: Install dependencies
-      run: go mod download
-
-    - name: Run integration tests
-      # Skip tests marked with t.Skip() unless they are explicitly requested
-      # -tags=integration flag selects only integration tests
-      run: |
-        if [ -n "${{ secrets.RUN_INTEGRATION_TESTS }}" ]; then
-          echo "Running integration tests"
-          go test -v ./internal/tests -run "Integration" -skip=""
-        else
-          echo "Integration tests are disabled. Set RUN_INTEGRATION_TESTS secret to enable them."
-          exit 0
-        fi
+      - name: Run tests
+        run: go test -v ./...
