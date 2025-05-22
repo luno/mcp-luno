@@ -33,34 +33,6 @@ _(Requires "building from source" (see below) for now, npm & docker installation
 - **Security**: Secure authentication using Luno API keys
 - **VS Code Integration**: Easy integration with VS Code's Copilot features
 
-## Installation
-
-### Prerequisites
-
-- Go 1.24 or later
-- Luno account with API key and secret
-
-### Building from Source
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/luno/luno-mcp
-cd luno-mcp
-```
-
-2. Build the binary:
-
-```bash
-go build -o luno-mcp ./cmd/server
-```
-
-3. Make it available system-wide (optional):
-
-```bash
-sudo mv luno-mcp /usr/local/bin/
-```
-
 ## Usage
 
 ### Setting up credentials
@@ -85,7 +57,7 @@ export LUNO_API_DEBUG=true
 
 Copy the .env.example file and name it .env (this always should be .gitignored), and paste your keys in there.
 
-Depending on your setup, you might need an additional step to load these vars for your application. E.g. https://github.com/joho/godotenv
+Depending on your setup, you might need an additional step to load these vars for your application. E.g. [godotenv](https://github.com/joho/godotenv)
 
 ### Running the server
 
@@ -107,40 +79,6 @@ luno-mcp --transport sse --sse-address localhost:8080
 - `--sse-address`: Address for SSE transport (default: `localhost:8080`)
 - `--domain`: Luno API domain (default: `api.luno.com`)
 - `--log-level`: Log level (`debug`, `info`, `warn`, `error`, default: `info`)
-
-## VS Code Integration
-
-To integrate with VS Code, add the following to your settings.json file (or click on the badge at the top of this README):
-
-### For stdio transport:
-
-```json
-"mcp": {
-  "servers": {
-    "luno": {
-      "command": "luno-mcp",
-      "args": [],
-      "env": {
-        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
-        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
-      }
-    }
-  }
-}
-```
-
-### For SSE transport:
-
-```json
-"mcp": {
-  "servers": {
-    "luno": {
-      "type": "sse",
-      "url": "http://localhost:8080/sse"
-    }
-  }
-}
-```
 
 ## Available Tools
 
@@ -194,6 +132,68 @@ Show me recent trades for XBTZAR
 What's the latest price for Bitcoin in ZAR?
 ```
 
+## VS Code Integration
+
+To integrate with VS Code, add the following to your settings.json file (or click on the badge at the top of this README):
+
+### For stdio transport:
+
+```json
+"mcp": {
+  "servers": {
+    "luno": {
+      "command": "luno-mcp",
+      "args": [],
+      "env": {
+        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
+        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
+      }
+    }
+  }
+}
+```
+
+### For SSE transport:
+
+```json
+"mcp": {
+  "servers": {
+    "luno": {
+      "type": "sse",
+      "url": "http://localhost:8080/sse"
+    }
+  }
+}
+```
+
+## Installation
+
+### Prerequisites
+
+- Go 1.24 or later
+- Luno account with API key and secret
+
+### Building from Source
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/luno/luno-mcp
+cd luno-mcp
+```
+
+2. Build the binary:
+
+```bash
+go build -o luno-mcp ./cmd/server
+```
+
+3. Make it available system-wide (optional):
+
+```bash
+sudo mv luno-mcp /usr/local/bin/
+```
+
 ## Security Considerations
 
 This tool requires API credentials that have access to your Luno account. Be cautious when using API keys, especially ones with withdrawal permissions. It's recommended to create API keys with only the permissions needed for your specific use case.
@@ -233,6 +233,10 @@ For integration tests to work in GitHub Actions, you need to set up the followin
 - `RUN_INTEGRATION_TESTS`: Set to any non-empty value to enable integration tests on the main branch
 
 The integration tests are set up to run only when explicitly triggered or on the main branch when configured.
+
+### Contributing
+
+If you'd like to contribute to the development of this project, please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
 
 ## License
 
