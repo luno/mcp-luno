@@ -15,6 +15,7 @@ const (
 	EnvLunoAPIKeyID     = "LUNO_API_KEY_ID"
 	EnvLunoAPIKeySecret = "LUNO_API_SECRET"
 	EnvLunoAPIDomain    = "LUNO_API_DOMAIN"
+	EnvLunoAPIDebug     = "LUNO_API_DEBUG"
 
 	// Default Luno API domain
 	DefaultLunoDomain = "api.luno.com"
@@ -77,7 +78,21 @@ func Load(domainOverride string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to set Luno API credentials: %w", err)
 	}
-	client.SetDebug(true) // TODO: Remove when we don't need anymore
+
+	// Check if debug mode is enabled via environment variable
+	debugMode := false
+	if debugEnv := os.Getenv(strings.TrimSpace(EnvLunoAPIDebug)); debugEnv != "" {
+		// Enable debug mode if environment variable is set to "true", "1", or "yes"
+		debugMode = strings.ToLower(debugEnv) == "true" ||
+			debugEnv == "1" ||
+			strings.ToLower(debugEnv) == "yes"
+
+		if debugMode {
+			fmt.Println("Debug mode enabled via environment variable")
+		}
+	}
+
+	client.SetDebug(debugMode)
 	return &Config{
 		LunoClient: client,
 	}, nil

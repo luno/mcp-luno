@@ -57,21 +57,25 @@ sudo mv mcp-luno /usr/local/bin/
 
 ### Setting up credentials
 
-The server requires your Luno API key and secret. These can be obtained from your Luno account settings.
+The server requires your Luno API key and secret. These can be obtained from your Luno account settings, see here for more info: [https://www.luno.com/en/developers](https://www.luno.com/en/developers).
 
-You can do this either by:
+Set these either through:
 
-1. Shell file
-   Either set this through your shell file or terminal with:
-   Set the following environment variables:
+#### A shell file
+
+Either set this through your shell file or terminal with:
+Set the following environment variables:
 
 ```bash
 export LUNO_API_KEY_ID=your_api_key_id
 export LUNO_API_SECRET=your_api_secret
+# Optional: Enable debug mode
+export LUNO_API_DEBUG=true
 ```
 
-2. Using an .env file
-   Copy the .env.example file and name it .env (this always should be .gitignored), and paste your keys in there.
+#### An .env file
+
+Copy the .env.example file and name it .env (this always should be .gitignored), and paste your keys in there.
 
 Depending on your setup, you might need an additional step to load these vars for your application. E.g. https://github.com/joho/godotenv
 
@@ -150,7 +154,7 @@ To integrate with VS Code, add the following to your settings.json file (or clic
 
 You can ask Copilot to show your wallet balances:
 
-```
+```text
 What are my current wallet balances on Luno?
 ```
 
@@ -158,7 +162,7 @@ What are my current wallet balances on Luno?
 
 You can ask Copilot to help you trade:
 
-```
+```text
 Create a limit order to buy 0.001 BTC at 50000 ZAR
 ```
 
@@ -166,7 +170,7 @@ Create a limit order to buy 0.001 BTC at 50000 ZAR
 
 You can ask Copilot to show your transaction history:
 
-```
+```text
 Show me my recent Bitcoin transactions
 ```
 
@@ -174,17 +178,24 @@ Show me my recent Bitcoin transactions
 
 You can ask Copilot to show market data:
 
-```
+```text
 Show me recent trades for XBTZAR
 ```
 
-```
+```text
 What's the latest price for Bitcoin in ZAR?
 ```
 
 ## Security Considerations
 
 This tool requires API credentials that have access to your Luno account. Be cautious when using API keys, especially ones with withdrawal permissions. It's recommended to create API keys with only the permissions needed for your specific use case.
+
+### Best Practices for API Credentials
+
+1. **Create Limited-Permission API Keys**: Only grant the permissions absolutely necessary for your use case
+2. **Never Commit Credentials to Version Control**: Ensure `.env` files are always in your `.gitignore`
+3. **Rotate API Keys Regularly**: Periodically regenerate your API keys to limit the impact of potential leaks
+4. **Monitor API Usage**: Regularly check your Luno account for any unauthorized activity
 
 ## License
 
