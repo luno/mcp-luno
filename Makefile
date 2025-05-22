@@ -11,14 +11,6 @@ build:
 test:
 	go test ./...
 
-# Run unit tests only
-test-unit:
-	go test -v ./... -short
-
-# Run integration tests (needs API credentials)
-test-integration:
-	go test -v ./internal/tests -run "Integration" -skip=""
-
 # Clean build files
 clean:
 	go clean
