@@ -7,7 +7,7 @@
 *.dll
 *.so
 *.dylib
-mcp-luno
+luno-mcp
 
 # Test binary, built with `go test -c`
 *.test

@@ -10,13 +10,13 @@ import (
 	"syscall"
 
 	"github.com/joho/godotenv"
-	"github.com/luno/mcp-luno/internal/config"
-	"github.com/luno/mcp-luno/internal/logging"
-	"github.com/luno/mcp-luno/internal/server"
+	"github.com/luno/luno-mcp/internal/config"
+	"github.com/luno/luno-mcp/internal/logging"
+	"github.com/luno/luno-mcp/internal/server"
 )
 
 const (
-	appName    = "mcp-luno"
+	appName    = "luno-mcp"
 	appVersion = "0.1.0"
 )
 

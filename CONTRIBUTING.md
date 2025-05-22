@@ -50,7 +50,7 @@ We use pre-commit hooks to ensure code quality and consistency. The hooks will r
 4. Build and test your changes locally:
    ```bash
    make build
-   ./mcp-luno
+   ./luno-mcp
    ```
 
 5. Commit your changes. The pre-commit hooks will automatically run and may modify some files:

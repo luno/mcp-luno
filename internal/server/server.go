@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/luno/mcp-luno/internal/config"
-	"github.com/luno/mcp-luno/internal/resources"
-	"github.com/luno/mcp-luno/internal/tools"
+	"github.com/luno/luno-mcp/internal/config"
+	"github.com/luno/luno-mcp/internal/resources"
+	"github.com/luno/luno-mcp/internal/tools"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 

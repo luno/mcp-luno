@@ -1,4 +1,4 @@
-module github.com/luno/mcp-luno
+module github.com/luno/luno-mcp
 
 go 1.24
 

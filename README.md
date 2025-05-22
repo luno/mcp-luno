@@ -14,7 +14,7 @@ This project is currently in **beta phase**. While we've made every effort to en
 
 We welcome feedback and bug reports to help improve the project. Please report any issues you encounter via the [GitHub issue tracker](../../issues).
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Luno_MCP-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=mcp-luno&inputs=%5B%7B%22id%22%3A%22luno_api_key_id%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Key%20ID%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22luno_api_secret%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22mcp-luno%22%2C%22args%22%3A%5B%5D%2C%22env%22%3A%7B%22LUNO_API_KEY_ID%22%3A%22%24%7Binput%3Aluno_api_key_id%7D%22%2C%22LUNO_API_SECRET%22%3A%22%24%7Binput%3Aluno_api_secret%7D%22%7D%7D)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Luno_MCP-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=luno-mcp&inputs=%5B%7B%22id%22%3A%22luno_api_key_id%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Key%20ID%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22luno_api_secret%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22luno-mcp%22%2C%22args%22%3A%5B%5D%2C%22env%22%3A%7B%22LUNO_API_KEY_ID%22%3A%22%24%7Binput%3Aluno_api_key_id%7D%22%2C%22LUNO_API_SECRET%22%3A%22%24%7Binput%3Aluno_api_secret%7D%22%7D%7D)
 
 _(Requires "building from source" (see below) for now, npm & docker installation coming soon)_
 
@@ -37,20 +37,20 @@ _(Requires "building from source" (see below) for now, npm & docker installation
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/luno/mcp-luno
-cd mcp-luno
+git clone https://github.com/luno/luno-mcp
+cd luno-mcp
 ```
 
 2. Build the binary:
 
 ```bash
-go build -o mcp-luno ./cmd/server
+go build -o luno-mcp ./cmd/server
 ```
 
 3. Make it available system-wide (optional):
 
 ```bash
-sudo mv mcp-luno /usr/local/bin/
+sudo mv luno-mcp /usr/local/bin/
 ```
 
 ## Usage
@@ -84,13 +84,13 @@ Depending on your setup, you might need an additional step to load these vars fo
 #### Standard I/O mode (default)
 
 ```bash
-mcp-luno
+luno-mcp
 ```
 
 #### Server-Sent Events (SSE) mode
 
 ```bash
-mcp-luno --transport sse --sse-address localhost:8080
+luno-mcp --transport sse --sse-address localhost:8080
 ```
 
 ### Command-line options
@@ -110,7 +110,7 @@ To integrate with VS Code, add the following to your settings.json file (or clic
 "mcp": {
   "servers": {
     "luno": {
-      "command": "mcp-luno",
+      "command": "luno-mcp",
       "args": [],
       "env": {
         "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
