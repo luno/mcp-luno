@@ -1,0 +1,39 @@
+# Docker specific
+.dockerignore
+Dockerfile
+
+# Git
+.git
+.gitignore
+
+# Markdown files
+*.md
+
+# IDE specific
+.vscode
+.idea/
+
+# Shell scripts (if not needed in the image)
+demo.sh
+
+# Build files / Makefiles (if not needed in the image)
+Makefile
+
+# Configuration files for other tools
+renovate.json
+sonar-project.properties
+
+# License file (if not a .md file)
+LICENSE
+
+# Environment files
+.env
+*.env
+
+# Go specific (build cache, test binaries)
+*.test
+*.out
+
+# OS specific
+.DS_Store
+Thumbs.db
