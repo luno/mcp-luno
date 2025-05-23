@@ -42,6 +42,6 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:COPILOT_GITHUB_TOKEN}"
       }
-    },
-  },
+    }
+  }
 }
