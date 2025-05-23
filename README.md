@@ -22,9 +22,7 @@ This project is currently in **beta phase**. While we've made every effort to en
 
 We welcome feedback and bug reports to help improve the project. Please report any issues you encounter via the [GitHub issue tracker](../../issues).
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Luno_MCP-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=luno-mcp&inputs=%5B%7B%22id%22%3A%22luno_api_key_id%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Key%20ID%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22luno_api_secret%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22luno-mcp%22%2C%22args%22%3A%5B%5D%2C%22env%22%3A%7B%22LUNO_API_KEY_ID%22%3A%22%24%7Binput%3Aluno_api_key_id%7D%22%2C%22LUNO_API_SECRET%22%3A%22%24%7Binput%3Aluno_api_secret%7D%22%7D%7D)
-
-_(Requires "building from source" (see below) for now, npm & docker installation coming soon)_
+[![Install in VS Code from binary](https://img.shields.io/badge/VS_Code-Install_Luno_MCP-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=luno-mcp&inputs=%5B%7B%22id%22%3A%22luno_api_key_id%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Key%20ID%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22luno_api_secret%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22luno-mcp%22%2C%22args%22%3A%5B%5D%2C%22env%22%3A%7B%22LUNO_API_KEY_ID%22%3A%22%24%7Binput%3Aluno_api_key_id%7D%22%2C%22LUNO_API_SECRET%22%3A%22%24%7Binput%3Aluno_api_secret%7D%22%7D%7D)
 
 ## Features
 
@@ -38,73 +36,6 @@ _(Requires "building from source" (see below) for now, npm & docker installation
 ### Setting up credentials
 
 The server requires your Luno API key and secret. These can be obtained from your Luno account settings, see here for more info: [https://www.luno.com/developers](https://www.luno.com/developers).
-
-Set these either through:
-
-#### A shell file
-
-Either set this through your shell file or terminal with:
-Set the following environment variables:
-
-```bash
-export LUNO_API_KEY_ID=your_api_key_id
-export LUNO_API_SECRET=your_api_secret
-# Optional: Enable debug mode
-export LUNO_API_DEBUG=true
-```
-
-#### An .env file
-
-Copy the .env.example file and name it .env (this always should be .gitignored), and paste your keys in there.
-
-Depending on your setup, you might need an additional step to load these vars for your application. E.g. [godotenv](https://github.com/joho/godotenv)
-
-### Running the server
-
-#### Standard I/O mode (default)
-
-```bash
-luno-mcp
-```
-
-#### Server-Sent Events (SSE) mode
-
-```bash
-luno-mcp --transport sse --sse-address localhost:8080
-```
-
-#### Using Docker
-
-Build the Docker image:
-
-```bash
-docker build -t luno-mcp .
-```
-
-Run the Docker container:
-
-```bash
-docker run -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID -e LUNO_API_SECRET=$LUNO_API_SECRET luno-mcp
-```
-
-Alternatively, you can use an `.env` file to provide these environment variables. This simplifies the command and prevents your API key and secret from being stored in your shell history. First, ensure you have an `.env` file (you can copy `.env.example` and fill in your details) with your credentials, for example:
-
-```env
-LUNO_API_KEY_ID=your_api_key_id
-LUNO_API_SECRET=your_api_secret
-```
-
-Then, run the container using:
-
-```bash
-docker run --env-file .env luno-mcp
-```
-
-You can also use the `--transport sse` and `--sse-address` flags with Docker when using an `.env` file:
-
-```bash
-docker run --env-file .env -p 8080:8080 luno-mcp --transport sse --sse-address 0.0.0.0:8080
-```
 
 ### Command-line options
 
