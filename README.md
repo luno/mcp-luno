@@ -73,6 +73,26 @@ luno-mcp
 luno-mcp --transport sse --sse-address localhost:8080
 ```
 
+#### Using Docker
+
+Build the Docker image:
+
+```bash
+docker build -t luno-mcp .
+```
+
+Run the Docker container:
+
+```bash
+docker run -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID -e LUNO_API_SECRET=$LUNO_API_SECRET luno-mcp
+```
+
+You can also use the `--transport sse` and `--sse-address` flags with Docker:
+
+```bash
+docker run -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID -e LUNO_API_SECRET=$LUNO_API_SECRET -p 8080:8080 luno-mcp --transport sse --sse-address 0.0.0.0:8080
+```
+
 ### Command-line options
 
 - `--transport`: Transport type (`stdio` or `sse`, default: `stdio`)
@@ -134,7 +154,7 @@ What's the latest price for Bitcoin in ZAR?
 
 ## VS Code Integration
 
-To integrate with VS Code, add the following to your settings.json file (or click on the badge at the top of this README):
+To integrate with VS Code, add the following to your settings.json file (or click on the badge at the top of this README).
 
 ### For stdio transport:
 
@@ -177,22 +197,22 @@ To integrate with VS Code, add the following to your settings.json file (or clic
 
 1. Clone the repository:
 
-```bash
-git clone https://github.com/luno/luno-mcp
-cd luno-mcp
-```
+   ```bash
+   git clone https://github.com/luno/luno-mcp
+   cd luno-mcp
+   ```
 
 2. Build the binary:
 
-```bash
-go build -o luno-mcp ./cmd/server
-```
+   ```bash
+   go build -o luno-mcp ./cmd/server
+   ```
 
 3. Make it available system-wide (optional):
 
-```bash
-sudo mv luno-mcp /usr/local/bin/
-```
+   ```bash
+   sudo mv luno-mcp /usr/local/bin/
+   ```
 
 ## Security Considerations
 
