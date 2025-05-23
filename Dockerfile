@@ -15,7 +15,4 @@ RUN apk --no-cache add ca-certificates
 
 COPY --from=builder /luno-mcp /luno-mcp
 
-ENV LUNO_API_KEY_ID=""
-ENV LUNO_API_SECRET=""
-
 ENTRYPOINT ["/luno-mcp"]
