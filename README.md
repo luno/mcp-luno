@@ -87,10 +87,23 @@ Run the Docker container:
 docker run -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID -e LUNO_API_SECRET=$LUNO_API_SECRET luno-mcp
 ```
 
-You can also use the `--transport sse` and `--sse-address` flags with Docker:
+Alternatively, you can use an `.env` file to provide these environment variables. This simplifies the command and prevents your API key and secret from being stored in your shell history. First, ensure you have an `.env` file (you can copy `.env.example` and fill in your details) with your credentials, for example:
+
+```env
+LUNO_API_KEY_ID=your_api_key_id
+LUNO_API_SECRET=your_api_secret
+```
+
+Then, run the container using:
 
 ```bash
-docker run -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID -e LUNO_API_SECRET=$LUNO_API_SECRET -p 8080:8080 luno-mcp --transport sse --sse-address 0.0.0.0:8080
+docker run --env-file .env luno-mcp
+```
+
+You can also use the `--transport sse` and `--sse-address` flags with Docker when using an `.env` file:
+
+```bash
+docker run --env-file .env -p 8080:8080 luno-mcp --transport sse --sse-address 0.0.0.0:8080
 ```
 
 ### Command-line options
