@@ -14,27 +14,29 @@
     }
   ],
   "installDirections": {
-    "env": [
-      {
-        "name": "LUNO_API_KEY_ID",
-        "description": "Luno API Key ID",
-        "required": true
-      },
-      {
-        "name": "LUNO_API_SECRET",
-        "description": "Luno API Secret",
-        "required": true
-      }
-    ],
-    "configDirections": "Add the following to your settings.json or mcp.json file:\n\n```json\n\"mcp\": {\n  \"servers\": {\n    \"luno\": {\n      \"command\": \"luno-mcp\",\n      \"args\": [],\n      \"env\": {\n        \"LUNO_API_KEY_ID\": \"${env:LUNO_API_KEY_ID}\",\n        \"LUNO_API_SECRET\": \"${env:LUNO_API_SECRET}\"\n      }\n    }\n  }\n}\n```"
+    "configDirections": "Add the following to your settings.json or mcp.json file:\\\\n\\\\n```json\\\\n{\\\\n  \\\\\"mcp\\\\\\\": {\\\\n    \\\\\"servers\\\\\\\": {\\\\n      \\\\\"luno\\\\\\\": {\\\\n        \\\\\"command\\\\\\\": \\\\\"docker\\\\\\\",\\\\n        \\\\\"args\\\\\\\": [\\\\n          \\\\\"run\\\\\\\",\\\\n          \\\\\"--rm\\\\\\\",\\\\n          \\\\\"-i\\\\\\\",\\\\n          \\\\\"-e\\\\\\\",\\\\n          \\\\\"LUNO_API_KEY_ID=${input:luno_api_key_id}\\\\\\\",\\\\n          \\\\\"-e\\\\\\\",\\\\n          \\\\\"LUNO_API_SECRET=${input:luno_api_secret}\\\\\\\",\\\\n          \\\\\"ghcr.io/luno/luno-mcp:latest\\\\\"\\\\n        ],\\\\n        \\\\\"env\\\\\\\": {}\\\\n      }\\\\n    }\\\\n  }\\\\n}\\\\n```"
   },
+  "inputs": [
+    {
+      "id": "luno_api_key_id",
+      "type": "promptString",
+      "description": "Luno API Key ID",
+      "password": true
+    },
+    {
+      "id": "luno_api_secret",
+      "type": "promptString",
+      "description": "Luno API Secret",
+      "password": true
+    }
+  ],
   "servers": {
     "luno": {
-      "command": "luno-mcp",
+      "command": "luno-mcp", // Use local binary, rather than docker image, so that we can test changes locally.
       "args": [],
       "env": {
-        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
-        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
+        "LUNO_API_KEY_ID": "${input:luno_api_key_id}",
+        "LUNO_API_SECRET": "${input:luno_api_secret}"
       }
     },
     "github": { // https://github.com/github/github-mcp-server
