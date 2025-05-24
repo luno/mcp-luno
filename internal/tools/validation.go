@@ -32,19 +32,16 @@ func NewValidatePairTool() mcp.Tool {
 // HandleValidatePair handles the validate_pair tool
 func HandleValidatePair(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		arguments := request.Params.Arguments
-		pair, ok := arguments["pair"].(string)
-		if !ok || pair == "" {
-			return mcp.NewToolResultError(ErrTradingPairRequired), nil
+		pair, err := request.RequireString("pair")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting pair from request", err), nil
 		}
 
 		// Log original pair for debugging
 		originalPair := pair
 
-		// Normalize the pair
 		pair = normalizeCurrencyPair(pair)
 
-		// Validate the pair
 		isValid, errorMsg, suggestions := ValidatePair(ctx, cfg, pair)
 
 		type ValidationResult struct {

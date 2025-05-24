@@ -105,10 +105,9 @@ func NewGetTickerTool() mcp.Tool {
 // HandleGetTicker handles the get_ticker tool
 func HandleGetTicker(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		arguments := request.Params.Arguments
-		pair, ok := arguments["pair"].(string)
-		if !ok || pair == "" {
-			return mcp.NewToolResultError(ErrTradingPairRequired), nil
+		pair, err := request.RequireString("pair")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting pair from request", err), nil
 		}
 
 		// Normalize currency pair
@@ -149,11 +148,9 @@ func NewGetOrderBookTool() mcp.Tool {
 // HandleGetOrderBook handles the get_order_book tool
 func HandleGetOrderBook(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		arguments := request.Params.Arguments
-
-		pair, ok := arguments["pair"].(string)
-		if !ok || pair == "" {
-			return mcp.NewToolResultError(ErrTradingPairRequired), nil
+		pair, err := request.RequireString("pair")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting pair from request", err), nil
 		}
 
 		// Normalize currency pair
@@ -215,16 +212,16 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Since we're using a private API endpoint, authentication errors will be handled by the API call
 
-		arguments := request.Params.Arguments
-		// Extract and validate arguments
-		pair, ok := arguments["pair"].(string)
-		if !ok || pair == "" {
+		pair, err := request.RequireString("pair")
+		if err != nil {
 			// If no pair is provided, return a list of working pairs
 			workingPairs := GetWorkingPairs()
 			errorMsg := fmt.Sprintf("Trading pair is required. Please use one of these known working pairs: %s",
 				strings.Join(workingPairs, ", "))
-			return mcp.NewToolResultError(errorMsg), nil
-		} // Log original pair for debugging
+			if err != nil {
+				return mcp.NewToolResultErrorFromErr(errorMsg, err), nil
+			}
+		}
 		slog.Debug("Processing trading pair", "originalPair", pair)
 
 		// Normalize the pair - this should handle BTC->XBT conversion automatically
@@ -236,24 +233,27 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 		if !isValid {
 			// If invalid, show a helpful error message with suggestions
 			suggestionsStr := strings.Join(suggestions, ", ")
-			pairErrorMsg := fmt.Sprintf("Invalid trading pair: %s\n\n%s\n\nPlease try one of these working pairs: %s",
+			pairErrorMsg := fmt.Sprintf("Invalid trading pair: %s\\n\\n%s\\n\\nPlease try one of these working pairs: %s",
 				pair, errorMsg, suggestionsStr)
 			return mcp.NewToolResultError(pairErrorMsg), nil
 		}
 
-		orderType, ok := arguments["type"].(string)
-		if !ok || (orderType != "BUY" && orderType != "SELL") {
+		orderType, err := request.RequireString("type")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting type from request", err), nil
+		}
+		if orderType != "BUY" && orderType != "SELL" {
 			return mcp.NewToolResultError("Order type must be 'BUY' or 'SELL'"), nil
 		}
 
-		volumeStr, ok := arguments["volume"].(string)
-		if !ok || volumeStr == "" {
-			return mcp.NewToolResultError("Order volume is required"), nil
+		volumeStr, err := request.RequireString("volume")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting volume from request", err), nil
 		}
 
-		priceStr, ok := arguments["price"].(string)
-		if !ok || priceStr == "" {
-			return mcp.NewToolResultError("Limit price is required"), nil
+		priceStr, err := request.RequireString("price")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting price from request", err), nil
 		}
 
 		// Validate numeric values
@@ -335,10 +335,9 @@ func HandleCancelOrder(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Since we're using a private API endpoint, authentication errors will be handled by the API call
 
-		arguments := request.Params.Arguments
-		orderID, ok := arguments["order_id"].(string)
-		if !ok || orderID == "" {
-			return mcp.NewToolResultError("Order ID is required"), nil
+		orderID, err := request.RequireString("order_id")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting order_id from request", err), nil
 		}
 
 		result, err := cfg.LunoClient.StopOrder(ctx, &luno.StopOrderRequest{
@@ -378,21 +377,13 @@ func HandleListOrders(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Since we're using a private API endpoint, authentication errors will be handled by the API call
 
-		arguments := request.Params.Arguments
-		var pair string
-		if pairArg, ok := arguments["pair"]; ok {
-			pair, _ = pairArg.(string)
+		pair, err := request.RequireString("pair")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting pair from request", err), nil
 		}
 
-		limit := 100 // Default limit
-		if limitArg, ok := arguments["limit"]; ok {
-			if limitFloat, ok := limitArg.(float64); ok {
-				limit = int(limitFloat)
-				if limit <= 0 {
-					limit = 100
-				}
-			}
-		}
+		// Default to 100 if not present
+		limit := request.GetFloat("limit", 100)
 
 		listReq := &luno.ListOrdersRequest{
 			Pair:  pair,
@@ -441,10 +432,9 @@ func HandleListTransactions(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Since we're using a private API endpoint, authentication errors will be handled by the API call
 
-		arguments := request.Params.Arguments
-		accountIDStr, ok := arguments["account_id"].(string)
-		if !ok || accountIDStr == "" {
-			return mcp.NewToolResultError("Account ID is required"), nil
+		accountIDStr, err := request.RequireString("account_id")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting account_id from request", err), nil
 		}
 
 		// Convert account ID from string to int64
@@ -457,29 +447,13 @@ func HandleListTransactions(cfg *config.Config) server.ToolHandlerFunc {
 			Id: accountID,
 		}
 
-		// Set default rows
-		listReq.MaxRow = 100 // Default max rows
-		listReq.MinRow = 1   // Default min rows
+		// Default to 1 if not present
+		minRow := request.GetInt("min_row", 1)
+		listReq.MinRow = int64(minRow)
 
-		// Set min_row if provided
-		if minRowArg, ok := arguments["min_row"]; ok {
-			if minRowFloat, ok := minRowArg.(float64); ok {
-				minRow := int64(minRowFloat)
-				if minRow >= 0 {
-					listReq.MinRow = minRow
-				}
-			}
-		}
-
-		// Set max_row if provided
-		if maxRowArg, ok := arguments["max_row"]; ok {
-			if maxRowFloat, ok := maxRowArg.(float64); ok {
-				maxRow := int64(maxRowFloat)
-				if maxRow > 0 {
-					listReq.MaxRow = maxRow
-				}
-			}
-		}
+		// Default to 100 if not present
+		maxRow := request.GetInt("max_row", 100)
+		listReq.MaxRow = int64(maxRow)
 
 		transactions, err := cfg.LunoClient.ListTransactions(ctx, listReq)
 		if err != nil {
@@ -518,10 +492,9 @@ func HandleGetTransaction(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Since we're using a private API endpoint, authentication errors will be handled by the API call
 
-		arguments := request.Params.Arguments
-		accountIDStr, ok := arguments["account_id"].(string)
-		if !ok || accountIDStr == "" {
-			return mcp.NewToolResultError("Account ID is required"), nil
+		accountIDStr, err := request.RequireString("account_id")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting account_id from request", err), nil
 		}
 
 		// Convert account ID from string to int64
@@ -530,9 +503,9 @@ func HandleGetTransaction(cfg *config.Config) server.ToolHandlerFunc {
 			return mcp.NewToolResultError(fmt.Sprintf("Invalid account ID format: %v. Please provide a valid numeric account ID.", err)), nil
 		}
 
-		transactionIDStr, ok := arguments["transaction_id"].(string)
-		if !ok || transactionIDStr == "" {
-			return mcp.NewToolResultError("Transaction ID is required"), nil
+		transactionIDStr, err := request.RequireString("transaction_id")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting transaction_id from request", err), nil
 		}
 
 		// Attempt to convert transaction ID to int64 for comparison
@@ -597,10 +570,9 @@ func NewListTradesTool() mcp.Tool {
 // HandleListTrades handles the list_trades tool
 func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		arguments := request.Params.Arguments
-		pair, ok := arguments["pair"].(string)
-		if !ok || pair == "" {
-			return mcp.NewToolResultError(ErrTradingPairRequired), nil
+		pair, err := request.RequireString("pair")
+		if err != nil {
+			return mcp.NewToolResultErrorFromErr("getting pair from request", err), nil
 		}
 
 		// Normalize currency pair
@@ -610,16 +582,14 @@ func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 			Pair: pair,
 		}
 
-		// Set since timestamp if provided
-		if sinceStr, ok := arguments["since"].(string); ok && sinceStr != "" {
-			// Parse the timestamp string to int64
-			sinceTimestamp, err := strconv.ParseInt(sinceStr, 10, 64)
+		sinceStr, err := request.RequireString("since")
+		if err == nil && sinceStr != "" {
+			// Try to parse the since timestamp
+			sinceInt, err := strconv.ParseInt(sinceStr, 10, 64)
 			if err != nil {
-				return mcp.NewToolResultError(fmt.Sprintf("Invalid since timestamp format: %v", err)), nil
+				return mcp.NewToolResultError(fmt.Sprintf("Invalid 'since' timestamp format: %v. Please provide a valid Unix millisecond timestamp.", err)), nil
 			}
-			// Convert to time.Time then to luno.Time
-			t := time.Unix(0, sinceTimestamp*1e6)
-			req.Since = luno.Time(t)
+			req.Since = luno.Time(time.UnixMilli(sinceInt))
 		}
 
 		trades, err := cfg.LunoClient.ListTrades(ctx, req)
