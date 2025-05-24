@@ -218,9 +218,7 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 			workingPairs := GetWorkingPairs()
 			errorMsg := fmt.Sprintf("Trading pair is required. Please use one of these known working pairs: %s",
 				strings.Join(workingPairs, ", "))
-			if err != nil {
-				return mcp.NewToolResultErrorFromErr(errorMsg, err), nil
-			}
+			return mcp.NewToolResultErrorFromErr(errorMsg, err), nil
 		}
 		slog.Debug("Processing trading pair", "originalPair", pair)
 
@@ -233,7 +231,7 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 		if !isValid {
 			// If invalid, show a helpful error message with suggestions
 			suggestionsStr := strings.Join(suggestions, ", ")
-			pairErrorMsg := fmt.Sprintf("Invalid trading pair: %s\\n\\n%s\\n\\nPlease try one of these working pairs: %s",
+			pairErrorMsg := fmt.Sprintf("Invalid trading pair: %s\n\n%s\n\nPlease try one of these working pairs: %s",
 				pair, errorMsg, suggestionsStr)
 			return mcp.NewToolResultError(pairErrorMsg), nil
 		}
@@ -377,10 +375,9 @@ func HandleListOrders(cfg *config.Config) server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Since we're using a private API endpoint, authentication errors will be handled by the API call
 
-		pair, err := request.RequireString("pair")
-		if err != nil {
-			return mcp.NewToolResultErrorFromErr("getting pair from request", err), nil
-		}
+		// Get the pair if provided, otherwise it will be an empty string.
+		// An empty pair string will result in fetching orders for all pairs.
+		pair := request.GetString("pair", "")
 
 		// Default to 100 if not present
 		limit := request.GetFloat("limit", 100)
@@ -582,8 +579,8 @@ func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 			Pair: pair,
 		}
 
-		sinceStr, err := request.RequireString("since")
-		if err == nil && sinceStr != "" {
+		sinceStr := request.GetString("since", "")
+		if sinceStr != "" {
 			// Try to parse the since timestamp
 			sinceInt, err := strconv.ParseInt(sinceStr, 10, 64)
 			if err != nil {
