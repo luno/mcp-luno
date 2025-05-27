@@ -33,7 +33,7 @@
   "servers": {
     "luno": {
       "command": "sh",
-      "args": ["-c", "cd ${workspaceFolder} && make build && ./luno-mcp"], // Build and run local binary, rather than docker image, so that we can test changes locally.
+        "args": ["-c", "cd ${workspaceFolder} && make build && exec ./luno-mcp"], // Build and run local binary, so that we can test changes locally.
       "env": {
         "LUNO_API_KEY_ID": "${input:luno_api_key_id}",
         "LUNO_API_SECRET": "${input:luno_api_secret}"
