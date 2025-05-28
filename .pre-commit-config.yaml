@@ -19,3 +19,6 @@ repos:
 
       # Go Mod Tidy
       - id: go-mod-tidy-repo
+
+      # Go Test
+      - id: go-test-repo-pkg
