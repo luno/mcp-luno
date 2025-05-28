@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/luno/luno-go"
@@ -81,7 +82,7 @@ func DiscoverAvailablePairs(ctx context.Context, cfg *config.Config, includeErro
 			validPairsCache[pair] = true
 
 			// Add to discovered pairs if not already there
-			if !containsPair(discoveredPairsCache, pair) {
+			if !slices.Contains(discoveredPairsCache, pair) {
 				discoveredPairsCache = append(discoveredPairsCache, pair)
 			}
 		} else if includeErrors {
@@ -91,16 +92,6 @@ func DiscoverAvailablePairs(ctx context.Context, cfg *config.Config, includeErro
 
 	slog.Info("Trading pair discovery complete", "count", len(validPairs))
 	return validPairs
-}
-
-// Helper function to check if a slice contains a specific pair
-func containsPair(pairs []string, pair string) bool {
-	for _, p := range pairs {
-		if p == pair {
-			return true
-		}
-	}
-	return false
 }
 
 // GetMarketInfo returns a detailed description of the market situation
@@ -171,7 +162,7 @@ func ValidatePair(ctx context.Context, cfg *config.Config, pair string) (bool, s
 	if err == nil && ticker != nil {
 		// It's valid, add to cache
 		validPairsCache[normalizedPair] = true
-		if !containsPair(discoveredPairsCache, normalizedPair) {
+		if !slices.Contains(discoveredPairsCache, normalizedPair) {
 			discoveredPairsCache = append(discoveredPairsCache, normalizedPair)
 		}
 		return true, "", nil

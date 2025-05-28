@@ -117,10 +117,7 @@ func HandleGetTicker(cfg *config.Config) server.ToolHandlerFunc {
 			Pair: pair,
 		})
 		if err != nil {
-			suggestedPairs := getSuggestedTradingPairs()
-			errorMsg := fmt.Sprintf("Failed to get ticker: %v\n\nCommon trading pairs on Luno: %s",
-				err, suggestedPairs)
-			return mcp.NewToolResultError(errorMsg), nil
+			return mcp.NewToolResultErrorFromErr("getting ticker", err), nil
 		}
 
 		resultJSON, err := json.MarshalIndent(ticker, "", "  ")
@@ -160,10 +157,7 @@ func HandleGetOrderBook(cfg *config.Config) server.ToolHandlerFunc {
 			Pair: pair,
 		})
 		if err != nil {
-			suggestedPairs := getSuggestedTradingPairs()
-			errorMsg := fmt.Sprintf("Failed to get order book: %v\n\nCommon trading pairs on Luno: %s",
-				err, suggestedPairs)
-			return mcp.NewToolResultError(errorMsg), nil
+			return mcp.NewToolResultErrorFromErr("getting order book", err), nil
 		}
 
 		resultJSON, err := json.MarshalIndent(orderBook, "", "  ")
@@ -591,10 +585,7 @@ func HandleListTrades(cfg *config.Config) server.ToolHandlerFunc {
 
 		trades, err := cfg.LunoClient.ListTrades(ctx, req)
 		if err != nil {
-			suggestedPairs := getSuggestedTradingPairs()
-			errorMsg := fmt.Sprintf("Failed to list trades: %v\n\nCommon trading pairs on Luno: %s",
-				err, suggestedPairs)
-			return mcp.NewToolResultError(errorMsg), nil
+			return mcp.NewToolResultErrorFromErr("listing trades", err), nil
 		}
 
 		resultJSON, err := json.MarshalIndent(trades, "", "  ")
@@ -636,33 +627,4 @@ func normalizeCurrencyPair(pair string) string {
 	slog.Debug("Currency pair normalization", "original", originalPair, "normalized", pair)
 
 	return pair
-}
-
-// getSuggestedTradingPairs returns a string with common Luno trading pairs
-func getSuggestedTradingPairs() string {
-	// Dynamic generation of trading pairs
-	// Define base currencies and fiat currencies
-	baseCurrencies := []string{"XBT", "ETH", "XRP", "LTC", "BCH"}
-	fiatCurrencies := []string{"ZAR", "NGN", "GBP", "EUR", "USD", "MYR", "IDR", "UGX"}
-
-	// Generate all possible combinations
-	var pairs []string
-
-	// Base/fiat pairs (most common)
-	for _, base := range baseCurrencies {
-		for _, fiat := range fiatCurrencies {
-			// Not all combinations exist, but including most common ones
-			if base == "XBT" || // XBT pairs with all fiats
-				(base == "ETH" && (fiat == "ZAR" || fiat == "NGN" || fiat == "GBP" ||
-					fiat == "EUR" || fiat == "USD" || fiat == "MYR" || fiat == "IDR")) {
-				pairs = append(pairs, base+fiat)
-			}
-		}
-	}
-
-	// Add crypto-to-crypto pairs
-	cryptoCryptoPairs := []string{"ETHXBT", "XRPXBT", "LTCXBT", "BCHXBT"}
-	pairs = append(pairs, cryptoCryptoPairs...)
-
-	return strings.Join(pairs, ", ")
 }

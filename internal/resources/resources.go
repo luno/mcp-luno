@@ -207,9 +207,12 @@ func HandleAccountTemplate(cfg *config.Config) server.ResourceTemplateHandlerFun
 // extractAccountID extracts the account ID from a URI like "luno://accounts/{id}"
 func extractAccountID(uri string) string {
 	// Simple extraction assuming the URI is in the format "luno://accounts/123"
-	// In a real implementation, you might want to use a proper URI template library
 	parts := strings.Split(uri, "/")
-	if len(parts) < 3 {
+	// Check for invalid URI formats:
+	// - len(parts) < 3: handles URIs that are too short (e.g., "luno://" or "luno:")
+	// - len(parts) == 3 && parts[2] == "accounts": handles "luno://accounts" without an ID
+	//   This prevents returning "accounts" as the account ID when no actual ID is provided
+	if len(parts) < 3 || (len(parts) == 3 && parts[2] == "accounts") {
 		return ""
 	}
 	return parts[len(parts)-1]

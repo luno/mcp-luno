@@ -79,14 +79,19 @@ func (h *MultiHandler) WithGroup(name string) slog.Handler {
 	return &MultiHandler{handlers: handlers}
 }
 
+// NotificationSender interface for sending notifications to clients
+type NotificationSender interface {
+	SendNotificationToAllClients(method string, params map[string]any)
+}
+
 // MCPNotificationHandler is a handler that sends logs as MCP notifications
 type MCPNotificationHandler struct {
-	s     *server.MCPServer
+	s     NotificationSender
 	level slog.Level
 }
 
 // NewMCPNotificationHandler creates a new handler that forwards logs to MCP clients
-func NewMCPNotificationHandler(s *server.MCPServer, level slog.Level) *MCPNotificationHandler {
+func NewMCPNotificationHandler(s NotificationSender, level slog.Level) *MCPNotificationHandler {
 	return &MCPNotificationHandler{
 		s:     s,
 		level: level,
@@ -100,6 +105,11 @@ func (h *MCPNotificationHandler) Enabled(ctx context.Context, level slog.Level) 
 
 // Handle implements slog.Handler
 func (h *MCPNotificationHandler) Handle(ctx context.Context, record slog.Record) error {
+	// Check if this handler is enabled for the record's level
+	if !h.Enabled(ctx, record.Level) {
+		return nil
+	}
+
 	// Convert slog level to MCP logging level
 	level := slogLevelToMCPLevel(record.Level)
 
