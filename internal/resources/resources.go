@@ -33,6 +33,13 @@ func NewWalletResource() mcp.Resource {
 // HandleWalletResource returns a handler for the wallet resource
 func HandleWalletResource(cfg *config.Config) server.ResourceHandlerFunc {
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+		if cfg == nil {
+			return nil, fmt.Errorf("configuration is nil")
+		}
+		if cfg.LunoClient == nil {
+			return nil, fmt.Errorf("Luno client is not configured")
+		}
+
 		balances, err := cfg.LunoClient.GetBalances(ctx, &luno.GetBalancesRequest{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to get balances: %w", err)
@@ -66,6 +73,13 @@ func NewTransactionsResource() mcp.Resource {
 // HandleTransactionsResource returns a handler for the transactions resource
 func HandleTransactionsResource(cfg *config.Config) server.ResourceHandlerFunc {
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+		if cfg == nil {
+			return nil, fmt.Errorf("configuration is nil")
+		}
+		if cfg.LunoClient == nil {
+			return nil, fmt.Errorf("Luno client is not configured")
+		}
+
 		// Get transactions for the first account that has them
 		balances, err := cfg.LunoClient.GetBalances(ctx, &luno.GetBalancesRequest{})
 		if err != nil {
@@ -139,6 +153,13 @@ func NewAccountTemplate() mcp.ResourceTemplate {
 // HandleAccountTemplate returns a handler for the account resource template
 func HandleAccountTemplate(cfg *config.Config) server.ResourceTemplateHandlerFunc {
 	return func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+		if cfg == nil {
+			return nil, fmt.Errorf("configuration is nil")
+		}
+		if cfg.LunoClient == nil {
+			return nil, fmt.Errorf("Luno client is not configured")
+		}
+
 		// Extract account ID from URI
 		uri := request.Params.URI
 		if uri == "" {

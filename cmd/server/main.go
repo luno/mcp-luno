@@ -125,8 +125,7 @@ func startServer(ctx context.Context, mcpServer *mcpserver.MCPServer, flags CliF
 		slog.Info("Starting Luno MCP server using SSE transport", slog.String("address", flags.SSEAddr))
 		return server.ServeSSE(ctx, mcpServer, flags.SSEAddr)
 	default:
-		log.Fatalf("Invalid transport type: %s. Must be 'stdio' or 'sse'", flags.TransportType)
-		return nil // This line will never be reached due to log.Fatalf
+		return fmt.Errorf("invalid transport type: %s. Must be 'stdio' or 'sse'", flags.TransportType)
 	}
 }
 

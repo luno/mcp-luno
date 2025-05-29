@@ -10,11 +10,6 @@ require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
 packages:
-  github.com/mark3labs/mcp-go/server:
-    config:
-      all: true
-      dir: internal/mocks/github.com/mark3labs/mcp-go/server
-      filename: 'mocks.go'
   github.com/luno/luno-mcp/internal/logging:
     config:
       all: true

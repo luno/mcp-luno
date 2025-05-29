@@ -2,53 +2,49 @@ package resources
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	"github.com/luno/luno-mcp/internal/config"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/stretchr/testify/assert"
+)
+
+const (
+	expectedMIMEType = "application/json"
+	expectedNameFmt  = "Expected name %q, got %q"
 )
 
 func TestNewWalletResource(t *testing.T) {
 	resource := NewWalletResource()
 
-	if resource.URI != WalletResourceURI {
-		t.Errorf("Expected URI %q, got %q", WalletResourceURI, resource.URI)
-	}
-
-	if resource.Name != "Luno Wallets" {
-		t.Errorf("Expected name %q, got %q", "Luno Wallets", resource.Name)
-	}
-
-	if resource.MIMEType != "application/json" {
-		t.Errorf("Expected MIME type %q, got %q", "application/json", resource.MIMEType)
-	}
+	assert.Equal(t, WalletResourceURI, resource.URI)
+	assert.Equal(t, "Luno Wallets", resource.Name)
+	assert.Equal(t, expectedMIMEType, resource.MIMEType)
 }
 
 func TestNewTransactionsResource(t *testing.T) {
 	resource := NewTransactionsResource()
 
-	if resource.URI != TransactionsResourceURI {
-		t.Errorf("Expected URI %q, got %q", TransactionsResourceURI, resource.URI)
-	}
-
-	if resource.Name != "Luno Transactions" {
-		t.Errorf("Expected name %q, got %q", "Luno Transactions", resource.Name)
-	}
-
-	if resource.MIMEType != "application/json" {
-		t.Errorf("Expected MIME type %q, got %q", "application/json", resource.MIMEType)
-	}
+	assert.Equal(t, TransactionsResourceURI, resource.URI)
+	assert.Equal(t, "Luno Transactions", resource.Name)
+	assert.Equal(t, expectedMIMEType, resource.MIMEType)
 }
 
 func TestNewAccountTemplate(t *testing.T) {
+	expectedJSON := `{
+		"uriTemplate": "luno://accounts/{id}",
+		"name": "Luno Account",
+		"description": "Returns details for a specific Luno account"
+	}`
+
 	template := NewAccountTemplate()
 
-	if template.URITemplate.Raw() != AccountTemplateURI {
-		t.Errorf("Expected URI template %q, got %q", AccountTemplateURI, template.URITemplate.Raw())
-	}
+	actualJSON, err := json.Marshal(template)
+	assert.NoError(t, err)
 
-	if template.Name != "Luno Account" {
-		t.Errorf("Expected name %q, got %q", "Luno Account", template.Name)
-	}
+	// Compare JSON structures directly. Can't create an expected object as the fields can only be set internally.
+	assert.JSONEq(t, expectedJSON, string(actualJSON))
 }
 
 func TestExtractAccountID(t *testing.T) {
@@ -57,94 +53,198 @@ func TestExtractAccountID(t *testing.T) {
 		uri      string
 		expected string
 	}{
-		{
-			name:     "valid account URI",
-			uri:      "luno://accounts/12345",
-			expected: "12345",
-		},
-		{
-			name:     "account URI with longer ID",
-			uri:      "luno://accounts/987654321",
-			expected: "987654321",
-		},
-		{
-			name:     "malformed URI with insufficient parts",
-			uri:      "luno://accounts",
-			expected: "",
-		},
-		{
-			name:     "malformed URI with no parts",
-			uri:      "",
-			expected: "",
-		},
-		{
-			name:     "malformed URI with single part",
-			uri:      "accounts",
-			expected: "",
-		},
-		{
-			name:     "URI with extra path components",
-			uri:      "luno://accounts/12345/extra/path",
-			expected: "path",
-		},
+		{"valid account URI", "luno://accounts/1234567890", "1234567890"},
+		{"empty URI", "", ""},
+		{"invalid format", "luno://accounts", ""},
+		{"short URI", "luno://", ""},
+		{"no account ID", "luno://accounts/", ""},
+		{"different resource", "luno://wallets/123", "123"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			result := extractAccountID(tc.uri)
-			if result != tc.expected {
-				t.Errorf("extractAccountID(%q) = %q, want %q", tc.uri, result, tc.expected)
-			}
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
 
-// TestHandleWalletResourceWithMockClient tests the wallet resource handler
-// Note: This would require a mock Luno client to fully test without making real API calls
+// TestHandleWalletResourceStructure tests that the wallet resource handler can be created
 func TestHandleWalletResourceStructure(t *testing.T) {
-	// Test that the handler can be created (structure test)
-	// In a full implementation, you'd want to mock the config.Config and test the actual handler
-
-	// This tests that the function signature is correct and can be called
 	handler := HandleWalletResource(nil)
-	if handler == nil {
-		t.Error("HandleWalletResource should return a non-nil handler")
-	}
+	assert.NotNil(t, handler, "HandleWalletResource should return a non-nil handler")
 }
 
 // TestHandleTransactionsResourceStructure tests the transactions resource handler structure
 func TestHandleTransactionsResourceStructure(t *testing.T) {
 	handler := HandleTransactionsResource(nil)
-	if handler == nil {
-		t.Error("HandleTransactionsResource should return a non-nil handler")
-	}
+	assert.NotNil(t, handler, "HandleTransactionsResource should return a non-nil handler")
 }
 
 // TestHandleAccountTemplateStructure tests the account template handler structure
 func TestHandleAccountTemplateStructure(t *testing.T) {
 	handler := HandleAccountTemplate(nil)
-	if handler == nil {
-		t.Error("HandleAccountTemplate should return a non-nil handler")
+	assert.NotNil(t, handler, "HandleAccountTemplate should return a non-nil handler")
+}
+
+// createTestConfig creates a configuration for testing
+func createTestConfig() *config.Config {
+	// For testing, we create a config with a nil client
+	// In real integration tests, this would be a properly configured client
+	return &config.Config{
+		LunoClient: nil,
 	}
 }
 
-// Test that handlers return proper errors for invalid input
-func TestHandleAccountTemplateWithInvalidInput(t *testing.T) {
-	handler := HandleAccountTemplate(nil)
-
-	// Test with empty URI
-	request := mcp.ReadResourceRequest{}
-	request.Params.URI = ""
-
-	_, err := handler(context.Background(), request)
-	if err == nil {
-		t.Error("Expected error for empty URI, got nil")
+// TestHandleWalletResourceIntegration tests the wallet resource handler structure and behavior
+func TestHandleWalletResourceIntegration(t *testing.T) {
+	tests := []struct {
+		name        string
+		config      *config.Config
+		expectError bool
+	}{
+		{
+			name:        "nil config",
+			config:      nil,
+			expectError: true,
+		},
+		{
+			name:        "config with nil client",
+			config:      createTestConfig(),
+			expectError: true,
+		},
 	}
 
-	// Test with invalid URI format
-	request.Params.URI = "invalid-uri-format"
-	_, err = handler(context.Background(), request)
-	if err == nil {
-		t.Error("Expected error for invalid URI format, got nil")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			handler := HandleWalletResource(tc.config)
+			assert.NotNil(t, handler, "HandleWalletResource should return a non-nil handler")
+
+			req := mcp.ReadResourceRequest{
+				Params: struct {
+					URI       string         `json:"uri"`
+					Arguments map[string]any `json:"arguments,omitempty"`
+				}{
+					URI: WalletResourceURI,
+				},
+			}
+
+			result, err := handler(context.Background(), req)
+
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			}
+		})
+	}
+}
+
+// TestHandleTransactionsResourceIntegration tests the transactions resource handler structure and behavior
+func TestHandleTransactionsResourceIntegration(t *testing.T) {
+	tests := []struct {
+		name        string
+		config      *config.Config
+		expectError bool
+	}{
+		{
+			name:        "nil config",
+			config:      nil,
+			expectError: true,
+		},
+		{
+			name:        "config with nil client",
+			config:      createTestConfig(),
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			handler := HandleTransactionsResource(tc.config)
+			assert.NotNil(t, handler, "HandleTransactionsResource should return a non-nil handler")
+
+			req := mcp.ReadResourceRequest{
+				Params: struct {
+					URI       string         `json:"uri"`
+					Arguments map[string]any `json:"arguments,omitempty"`
+				}{
+					URI: TransactionsResourceURI,
+				},
+			}
+
+			result, err := handler(context.Background(), req)
+
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			}
+		})
+	}
+}
+
+// TestHandleAccountTemplateIntegration tests the account template handler structure and behavior
+func TestHandleAccountTemplateIntegration(t *testing.T) {
+	tests := []struct {
+		name        string
+		config      *config.Config
+		uri         string
+		expectError bool
+	}{
+		{
+			name:        "nil config",
+			config:      nil,
+			uri:         "luno://accounts/1234567890",
+			expectError: true,
+		},
+		{
+			name:        "config with nil client",
+			config:      createTestConfig(),
+			uri:         "luno://accounts/1234567890",
+			expectError: true,
+		},
+		{
+			name:        "invalid URI format",
+			config:      createTestConfig(),
+			uri:         "invalid://uri",
+			expectError: true,
+		},
+		{
+			name:        "empty account ID",
+			config:      createTestConfig(),
+			uri:         "luno://accounts/",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			handler := HandleAccountTemplate(tc.config)
+			assert.NotNil(t, handler, "HandleAccountTemplate should return a non-nil handler")
+
+			req := mcp.ReadResourceRequest{
+				Params: struct {
+					URI       string         `json:"uri"`
+					Arguments map[string]any `json:"arguments,omitempty"`
+				}{
+					URI: tc.uri,
+				},
+			}
+
+			result, err := handler(context.Background(), req)
+
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			}
+		})
 	}
 }

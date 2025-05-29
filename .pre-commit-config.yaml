@@ -21,4 +21,4 @@ repos:
       - id: go-mod-tidy-repo
 
       # Go Test
-      - id: go-test-repo-pkg
+      - id: go-test-repo-mod
