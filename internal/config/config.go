@@ -37,13 +37,6 @@ func maskValue(s string) string {
 
 // Load loads the configuration from environment variables
 func Load(domainOverride string) (*Config, error) {
-	// Debugging: Print all environment variables to see if they're properly set
-	// fmt.Println("*** Environment Variables Debug ***")
-	// for _, env := range os.Environ() {
-	// 	fmt.Println(env)
-	// }
-	// fmt.Println("*** End Environment Variables Debug ***")
-
 	apiKeyID := os.Getenv(strings.TrimSpace(EnvLunoAPIKeyID))
 	apiKeySecret := os.Getenv(strings.TrimSpace(EnvLunoAPIKeySecret))
 
