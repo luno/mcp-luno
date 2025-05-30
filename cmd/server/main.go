@@ -92,14 +92,6 @@ func createMCPServer(cfg *config.Config) *mcpserver.MCPServer {
 	return server.NewMCPServer(appName, appVersion, cfg, logging.MCPHooks())
 }
 
-// validateTransportType checks if the transport type is valid
-func validateTransportType(transportType string) error {
-	if transportType != "stdio" && transportType != "sse" {
-		return fmt.Errorf("invalid transport type: %s. Must be 'stdio' or 'sse'", transportType)
-	}
-	return nil
-}
-
 // setupSignalHandling creates a context that will be cancelled on interrupt signals
 func setupSignalHandling() (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -135,11 +127,6 @@ func main() {
 
 	// Parse command line flags
 	flags := parseFlags()
-
-	// Validate transport type
-	if err := validateTransportType(flags.TransportType); err != nil {
-		log.Fatalf("Configuration error: %v", err)
-	}
 
 	// Set up basic logger first
 	setupLogger(flags.LogLevel)

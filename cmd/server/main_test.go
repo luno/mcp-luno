@@ -78,52 +78,6 @@ func TestParseLogLevel(t *testing.T) {
 	}
 }
 
-func TestValidateTransportType(t *testing.T) {
-	tests := []struct {
-		name          string
-		transportType string
-		expectError   bool
-	}{
-		{
-			name:          "valid stdio transport",
-			transportType: "stdio",
-			expectError:   false,
-		},
-		{
-			name:          "valid sse transport",
-			transportType: "sse",
-			expectError:   false,
-		},
-		{
-			name:          "invalid transport type",
-			transportType: "http",
-			expectError:   true,
-		},
-		{
-			name:          "empty transport type",
-			transportType: "",
-			expectError:   true,
-		},
-		{
-			name:          "case sensitive invalid",
-			transportType: "STDIO",
-			expectError:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateTransportType(tt.transportType)
-			if tt.expectError {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), "invalid transport type")
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
 func TestParseFlags(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -416,11 +370,6 @@ func TestMainFunctionFlow(t *testing.T) {
 		assert.Equal(t, testDefaultSSEAddr, flags.SSEAddr)
 		assert.Equal(t, "", flags.LunoDomain)
 		assert.Equal(t, testLogLevelInfo, flags.LogLevel)
-	})
-
-	t.Run("validate transport type", func(t *testing.T) {
-		err := validateTransportType(testTransportStdio)
-		assert.NoError(t, err)
 	})
 
 	t.Run("setup logger", func(t *testing.T) {

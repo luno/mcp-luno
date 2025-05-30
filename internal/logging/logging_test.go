@@ -3,388 +3,308 @@ package logging
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log/slog"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
-	testMessage             = "test message"
-	testNotificationMessage = "test notification message"
-	unexpectedErrorFormat   = "Unexpected error: %v"
-	notificationMethod      = "notifications/message"
-	lunoMCPLogger           = "luno-mcp"
+	loggerName         = "luno-mcp"
+	logMsgMCPRequest   = "MCP request received"
+	logMsgMCPResponse  = "MCP response sent"
+	logMsgMCPError     = "MCP error occurred"
+	logKeyMethod       = "method"
+	logKeyID           = "id"
+	logKeyError        = "error"
+	testMessageDefault = "this is a test log message"
+	testIntegrationMsg = "integration test message"
+
+	// Corrected JSON string constants for assertions
+	jsonLogLevelDebug     = `"level":"DEBUG"`
+	jsonLogLevelError     = `"level":"ERROR"`
+	jsonTestComponentAttr = `"component":"test"`
+	jsonTestGroupAttrOpen = `"testGroup":{`
 )
 
-func TestNewMultiHandler(t *testing.T) {
-	// Create mock handlers
-	var buf1, buf2 bytes.Buffer
-	handler1 := slog.NewTextHandler(&buf1, &slog.HandlerOptions{Level: slog.LevelInfo})
-	handler2 := slog.NewTextHandler(&buf2, &slog.HandlerOptions{Level: slog.LevelDebug})
-
-	multiHandler := NewMultiHandler(handler1, handler2)
-
-	if len(multiHandler.handlers) != 2 {
-		t.Errorf("Expected 2 handlers, got %d", len(multiHandler.handlers))
-	}
+// mockSender is a mock implementation of NotificationSender for testing
+type mockSender struct {
+	mock.Mock
 }
 
-func TestMultiHandlerEnabled(t *testing.T) {
-	tests := []struct {
-		name            string
-		handler1Level   slog.Level
-		handler2Level   slog.Level
-		testLevel       slog.Level
-		expectedEnabled bool
+func (m *mockSender) SendNotificationToAllClients(method string, params map[string]any) {
+	m.Called(method, params)
+}
+
+func TestSlogLevelToMCPLevel(t *testing.T) {
+	testCases := []struct {
+		name      string
+		slogLevel slog.Level
+		mcpLevel  mcp.LoggingLevel
 	}{
-		{
-			name:            "enabled when one handler supports level",
-			handler1Level:   slog.LevelInfo,
-			handler2Level:   slog.LevelError,
-			testLevel:       slog.LevelInfo,
-			expectedEnabled: true,
-		},
-		{
-			name:            "enabled when both handlers support level",
-			handler1Level:   slog.LevelDebug,
-			handler2Level:   slog.LevelInfo,
-			testLevel:       slog.LevelInfo,
-			expectedEnabled: true,
-		},
-		{
-			name:            "disabled when no handlers support level",
-			handler1Level:   slog.LevelWarn,
-			handler2Level:   slog.LevelError,
-			testLevel:       slog.LevelDebug,
-			expectedEnabled: false,
-		},
+		{"debug", slog.LevelDebug, mcp.LoggingLevelDebug},
+		{"info", slog.LevelInfo, mcp.LoggingLevelInfo},
+		{"warn", slog.LevelWarn, mcp.LoggingLevelWarning},
+		{"error", slog.LevelError, mcp.LoggingLevelError},
+		{"below debug", slog.LevelDebug - 4, mcp.LoggingLevelDebug},
+		{"between info and warn", slog.LevelInfo + 2, mcp.LoggingLevelWarning},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var buf1, buf2 bytes.Buffer
-			handler1 := slog.NewTextHandler(&buf1, &slog.HandlerOptions{Level: tc.handler1Level})
-			handler2 := slog.NewTextHandler(&buf2, &slog.HandlerOptions{Level: tc.handler2Level})
-
-			multiHandler := NewMultiHandler(handler1, handler2)
-			enabled := multiHandler.Enabled(context.Background(), tc.testLevel)
-
-			if enabled != tc.expectedEnabled {
-				t.Errorf("Expected enabled = %v, got %v", tc.expectedEnabled, enabled)
-			}
+			assert.Equal(t, tc.mcpLevel, slogLevelToMCPLevel(tc.slogLevel))
 		})
-	}
-}
-
-func TestMultiHandlerHandle(t *testing.T) {
-	var buf1, buf2 bytes.Buffer
-	handler1 := slog.NewTextHandler(&buf1, &slog.HandlerOptions{Level: slog.LevelInfo})
-	handler2 := slog.NewTextHandler(&buf2, &slog.HandlerOptions{Level: slog.LevelDebug})
-
-	multiHandler := NewMultiHandler(handler1, handler2)
-
-	record := slog.NewRecord(time.Now(), slog.LevelInfo, testMessage, 0)
-	err := multiHandler.Handle(context.Background(), record)
-	if err != nil {
-		t.Errorf(unexpectedErrorFormat, err)
-	}
-
-	// Both handlers should have received the message since they're both enabled for info level
-	if !strings.Contains(buf1.String(), testMessage) {
-		t.Error("Handler1 should have received the message")
-	}
-	if !strings.Contains(buf2.String(), testMessage) {
-		t.Error("Handler2 should have received the message")
-	}
-}
-
-func TestMultiHandlerWithAttrs(t *testing.T) {
-	var buf1, buf2 bytes.Buffer
-	handler1 := slog.NewTextHandler(&buf1, &slog.HandlerOptions{})
-	handler2 := slog.NewTextHandler(&buf2, &slog.HandlerOptions{})
-
-	multiHandler := NewMultiHandler(handler1, handler2)
-	newHandler := multiHandler.WithAttrs([]slog.Attr{slog.String("key", "value")})
-
-	// Verify it returns a MultiHandler
-	if _, ok := newHandler.(*MultiHandler); !ok {
-		t.Error("WithAttrs should return a MultiHandler")
-	}
-}
-
-func TestMultiHandlerWithGroup(t *testing.T) {
-	var buf1, buf2 bytes.Buffer
-	handler1 := slog.NewTextHandler(&buf1, &slog.HandlerOptions{})
-	handler2 := slog.NewTextHandler(&buf2, &slog.HandlerOptions{})
-
-	multiHandler := NewMultiHandler(handler1, handler2)
-	newHandler := multiHandler.WithGroup("testgroup")
-
-	// Verify it returns a MultiHandler
-	if _, ok := newHandler.(*MultiHandler); !ok {
-		t.Error("WithGroup should return a MultiHandler")
-	}
-}
-
-func TestNewMCPNotificationHandler(t *testing.T) {
-	mockSender := &MockNotificationSender{}
-	level := slog.LevelInfo
-
-	handler := NewMCPNotificationHandler(mockSender, level)
-
-	if handler.s != mockSender {
-		t.Error("NotificationSender should be set correctly")
-	}
-	if handler.level != level {
-		t.Error("Level should be set correctly")
 	}
 }
 
 func TestMCPNotificationHandlerEnabled(t *testing.T) {
-	tests := []struct {
-		name            string
-		handlerLevel    slog.Level
-		testLevel       slog.Level
-		expectedEnabled bool
-	}{
-		{
-			name:            "level above threshold",
-			handlerLevel:    slog.LevelInfo,
-			testLevel:       slog.LevelError,
-			expectedEnabled: true,
-		},
-		{
-			name:            "level at threshold",
-			handlerLevel:    slog.LevelInfo,
-			testLevel:       slog.LevelInfo,
-			expectedEnabled: true,
-		},
-		{
-			name:            "level below threshold",
-			handlerLevel:    slog.LevelInfo,
-			testLevel:       slog.LevelDebug,
-			expectedEnabled: false,
-		},
-	}
+	handler := NewMCPNotificationHandler(&mockSender{}, slog.LevelInfo) // Only Info and above
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			mockSender := &MockNotificationSender{}
-			handler := NewMCPNotificationHandler(mockSender, tc.handlerLevel)
-
-			enabled := handler.Enabled(context.Background(), tc.testLevel)
-			if enabled != tc.expectedEnabled {
-				t.Errorf("Expected enabled = %v, got %v", tc.expectedEnabled, enabled)
-			}
-		})
-	}
+	assert.True(t, handler.Enabled(context.Background(), slog.LevelInfo), "Info level should be enabled")
+	assert.True(t, handler.Enabled(context.Background(), slog.LevelWarn), "Warn level should be enabled")
+	assert.True(t, handler.Enabled(context.Background(), slog.LevelError), "Error level should be enabled")
+	assert.False(t, handler.Enabled(context.Background(), slog.LevelDebug), "Debug level should be disabled")
 }
 
-func TestMCPNotificationHandlerWithAttrs(t *testing.T) {
-	mockSender := &MockNotificationSender{}
-	handler := NewMCPNotificationHandler(mockSender, slog.LevelInfo)
+func TestMCPNotificationHandlerHandleNotificationFormat(t *testing.T) {
+	mockS := new(mockSender)
+	handler := NewMCPNotificationHandler(mockS, slog.LevelDebug) // Enable all levels for this test
+
+	level := slog.LevelInfo
+	mcpLevel := slogLevelToMCPLevel(level)
+
+	expectedParams := map[string]any{
+		"level":  string(mcpLevel),
+		"logger": loggerName,
+		"data":   testMessageDefault,
+	}
+	expectedMethod := mcp.NewLoggingMessageNotification(mcpLevel, loggerName, testMessageDefault).Method
+
+	mockS.On("SendNotificationToAllClients", expectedMethod, expectedParams).Return()
+
+	record := slog.NewRecord(time.Now(), level, testMessageDefault, 0)
+	err := handler.Handle(context.Background(), record)
+	assert.NoError(t, err)
+
+	mockS.AssertExpectations(t)
+}
+
+func TestMCPNotificationHandlerWithAttrsAndGroup(t *testing.T) {
+	handler := NewMCPNotificationHandler(&mockSender{}, slog.LevelInfo)
 
 	attrs := []slog.Attr{slog.String("key", "value")}
-	newHandler := handler.WithAttrs(attrs)
+	handlerWithAttrs := handler.WithAttrs(attrs)
+	assert.Equal(t, handler, handlerWithAttrs, "WithAttrs should return the same handler instance for simplicity")
 
-	// Should return the same handler (simplified implementation)
-	if newHandler != handler {
-		t.Error("WithAttrs should return the same handler")
-	}
+	handlerWithGroup := handler.WithGroup("testGroup")
+	assert.Equal(t, handler, handlerWithGroup, "WithGroup should return the same handler instance for simplicity")
 }
 
-func TestMCPNotificationHandlerWithGroup(t *testing.T) {
-	mockSender := &MockNotificationSender{}
-	handler := NewMCPNotificationHandler(mockSender, slog.LevelInfo)
+func TestMultiHandlerEnabled(t *testing.T) {
+	h1 := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
+	h2 := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 
-	newHandler := handler.WithGroup("testgroup")
+	multi := NewMultiHandler(h1, h2)
 
-	// Should return the same handler (simplified implementation)
-	if newHandler != handler {
-		t.Error("WithGroup should return the same handler")
-	}
+	assert.True(t, multi.Enabled(context.Background(), slog.LevelDebug), "Should be enabled if any handler is enabled for Debug")
+	assert.True(t, multi.Enabled(context.Background(), slog.LevelInfo), "Should be enabled if any handler is enabled for Info")
+	assert.True(t, multi.Enabled(context.Background(), slog.LevelWarn), "Should be enabled if any handler is enabled for Warn")
+
+	multiOnlyH1 := NewMultiHandler(h1)
+	assert.True(t, multiOnlyH1.Enabled(context.Background(), slog.LevelDebug))
+	assert.False(t, NewMultiHandler().Enabled(context.Background(), slog.LevelDebug), "Should be false if no handlers")
 }
 
-func TestMCPNotificationHandlerHandle(t *testing.T) {
-	mockSender := &MockNotificationSender{}
+func TestMultiHandlerHandle(t *testing.T) {
+	var buf1, buf2 bytes.Buffer
+	h1 := slog.NewJSONHandler(&buf1, &slog.HandlerOptions{Level: slog.LevelDebug})
+	h2 := slog.NewJSONHandler(&buf2, &slog.HandlerOptions{Level: slog.LevelInfo})
+	multi := NewMultiHandler(h1, h2)
 
-	// Set up expectation for SendNotificationToAllClients being called
-	mockSender.On("SendNotificationToAllClients",
-		notificationMethod,
-		map[string]interface{}{
-			"level":  "info",
-			"logger": lunoMCPLogger,
-			"data":   testNotificationMessage,
-		},
-	).Return().Once()
+	debugRecord := slog.NewRecord(time.Now(), slog.LevelDebug, testMessageDefault, 0)
+	infoRecord := slog.NewRecord(time.Now(), slog.LevelInfo, testMessageDefault, 0)
 
-	handler := NewMCPNotificationHandler(mockSender, slog.LevelInfo)
+	buf1.Reset()
+	buf2.Reset()
+	err := multi.Handle(context.Background(), debugRecord)
+	assert.NoError(t, err)
+	assert.True(t, strings.Contains(buf1.String(), testMessageDefault), "h1 should contain debug message")
+	assert.Equal(t, "", buf2.String(), "h2 should not contain debug message")
 
-	record := slog.NewRecord(time.Now(), slog.LevelInfo, testNotificationMessage, 0)
-	err := handler.Handle(context.Background(), record)
-	if err != nil {
-		t.Errorf(unexpectedErrorFormat, err)
-	}
-
-	// Verify mock expectations
-	mockSender.AssertExpectations(t)
+	buf1.Reset()
+	buf2.Reset()
+	err = multi.Handle(context.Background(), infoRecord)
+	assert.NoError(t, err)
+	assert.True(t, strings.Contains(buf1.String(), testMessageDefault), "h1 should contain info message")
+	assert.True(t, strings.Contains(buf2.String(), testMessageDefault), "h2 should contain info message")
 }
 
-func TestMCPNotificationHandlerLevelConversion(t *testing.T) {
-	tests := []struct {
-		name        string
-		slogLevel   slog.Level
-		expectedMCP string
-	}{
-		{
-			name:        "debug level conversion",
-			slogLevel:   slog.LevelDebug,
-			expectedMCP: "debug",
-		},
-		{
-			name:        "info level conversion",
-			slogLevel:   slog.LevelInfo,
-			expectedMCP: "info",
-		},
-		{
-			name:        "warn level conversion",
-			slogLevel:   slog.LevelWarn,
-			expectedMCP: "warning",
-		},
-		{
-			name:        "error level conversion",
-			slogLevel:   slog.LevelError,
-			expectedMCP: "error",
-		},
-	}
+func TestMultiHandlerWithAttrs(t *testing.T) {
+	var buf1 bytes.Buffer
+	h1 := slog.NewJSONHandler(&buf1, &slog.HandlerOptions{Level: slog.LevelDebug})
+	multi := NewMultiHandler(h1)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			mockSender := &MockNotificationSender{}
+	attrs := []slog.Attr{slog.String("component", "test")}
+	multiWithAttrs := multi.WithAttrs(attrs)
 
-			// Set up expectation for the correct MCP level
-			mockSender.On("SendNotificationToAllClients",
-				notificationMethod,
-				map[string]interface{}{
-					"level":  tc.expectedMCP,
-					"logger": lunoMCPLogger,
-					"data":   testMessage,
-				},
-			).Return().Once()
-
-			handler := NewMCPNotificationHandler(mockSender, slog.LevelDebug) // Allow all levels
-
-			record := slog.NewRecord(time.Now(), tc.slogLevel, testMessage, 0)
-			err := handler.Handle(context.Background(), record)
-			if err != nil {
-				t.Errorf(unexpectedErrorFormat, err)
-			}
-
-			mockSender.AssertExpectations(t)
-		})
-	}
+	record := slog.NewRecord(time.Now(), slog.LevelInfo, "test with attrs", 0)
+	err := multiWithAttrs.Handle(context.Background(), record)
+	assert.NoError(t, err)
+	assert.True(t, strings.Contains(buf1.String(), jsonTestComponentAttr), "Log output should contain the attribute")
 }
 
-func TestMCPNotificationHandlerFiltering(t *testing.T) {
-	mockSender := &MockNotificationSender{}
+func TestMultiHandlerWithGroup(t *testing.T) {
+	var buf1 bytes.Buffer
+	h1 := slog.NewJSONHandler(&buf1, &slog.HandlerOptions{Level: slog.LevelDebug})
+	multi := NewMultiHandler(h1)
 
-	// No expectations set - the mock should not receive any calls
-	// because debug messages should be filtered when handler level is Info
+	multiWithGroup := multi.WithGroup("testGroup")
 
-	handler := NewMCPNotificationHandler(mockSender, slog.LevelInfo)
+	record := slog.NewRecord(time.Now(), slog.LevelInfo, "test with group", 0)
+	// Add an attribute to the record
+	record.AddAttrs(slog.String("attrKey", "attrValue"))
 
-	// Try to handle a debug message (should be filtered)
-	debugRecord := slog.NewRecord(time.Now(), slog.LevelDebug, "debug message", 0)
-	err := handler.Handle(context.Background(), debugRecord)
-	if err != nil {
-		t.Errorf(unexpectedErrorFormat, err)
-	}
+	err := multiWithGroup.Handle(context.Background(), record)
+	assert.NoError(t, err)
 
-	// Verify no calls were made to the mock
-	mockSender.AssertExpectations(t)
+	// Add this log to see the exact output in the test logs
+	t.Logf("TestMultiHandlerWithGroup actual output: %s", buf1.String())
+
+	assert.True(t, strings.Contains(buf1.String(), jsonTestGroupAttrOpen), "Log output should contain the group opening")
+	assert.True(t, strings.Contains(buf1.String(), "attrKey"), "Log output should contain the attribute key")
+	assert.True(t, strings.Contains(buf1.String(), "attrValue"), "Log output should contain the attribute value")
 }
 
-func TestSlogLevelToMCPLevel(t *testing.T) {
-	tests := []struct {
-		name     string
-		level    slog.Level
-		expected mcp.LoggingLevel
-	}{
-		{
-			name:     "debug level",
-			level:    slog.LevelDebug,
-			expected: mcp.LoggingLevelDebug,
-		},
-		{
-			name:     "info level",
-			level:    slog.LevelInfo,
-			expected: mcp.LoggingLevelInfo,
-		},
-		{
-			name:     "warn level",
-			level:    slog.LevelWarn,
-			expected: mcp.LoggingLevelWarning,
-		},
-		{
-			name:     "error level",
-			level:    slog.LevelError,
-			expected: mcp.LoggingLevelError,
-		},
-	}
+func TestLoggingHooksExecution(t *testing.T) {
+	var logOutput bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logOutput, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(logger)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result := slogLevelToMCPLevel(tc.level)
-			if result != tc.expected {
-				t.Errorf("Expected %v, got %v", tc.expected, result)
-			}
-		})
-	}
+	ctx := context.Background()
+
+	t.Run("LogRequestHook logs request details", func(t *testing.T) {
+		logOutput.Reset()
+		id := "request-001"
+		method := mcp.MCPMethod("system.listMethods")
+		message := map[string]any{"service": "test"}
+
+		LogRequestHook(ctx, id, method, message)
+
+		output := logOutput.String()
+		assert.Contains(t, output, logMsgMCPRequest)
+		assert.Contains(t, output, `"`+logKeyMethod+`":"system.listMethods"`)
+		assert.Contains(t, output, `"`+logKeyID+`":"request-001"`)
+		assert.Contains(t, output, jsonLogLevelDebug)
+	})
+
+	t.Run("LogSuccessHook logs response details", func(t *testing.T) {
+		logOutput.Reset()
+		id := "request-002"
+		method := mcp.MCPMethod("order.create")
+		message := map[string]any{"pair": "XBTEUR", "price": "10000"}
+		result := map[string]any{"order_id": "ord-123", "status": "pending"}
+
+		LogSuccessHook(ctx, id, method, message, result)
+
+		output := logOutput.String()
+		assert.Contains(t, output, logMsgMCPResponse)
+		assert.Contains(t, output, `"`+logKeyMethod+`":"order.create"`)
+		assert.Contains(t, output, `"`+logKeyID+`":"request-002"`)
+		assert.Contains(t, output, jsonLogLevelDebug)
+	})
+
+	t.Run("LogErrorHook logs error details", func(t *testing.T) {
+		logOutput.Reset()
+		id := "request-003"
+		method := mcp.MCPMethod("account.getBalance")
+		message := map[string]any{"asset": "XBT"}
+		testErr := errors.New("simulated API failure")
+
+		LogErrorHook(ctx, id, method, message, testErr)
+
+		output := logOutput.String()
+		assert.Contains(t, output, logMsgMCPError)
+		assert.Contains(t, output, `"`+logKeyID+`":"request-003"`)
+		assert.Contains(t, output, `"`+logKeyMethod+`":"account.getBalance"`)
+		assert.Contains(t, output, `"`+logKeyError+`":"simulated API failure"`)
+		assert.Contains(t, output, jsonLogLevelError)
+	})
 }
 
-func TestMCPHooks(t *testing.T) {
-	hooks := MCPHooks()
-
-	if hooks == nil {
-		t.Error("MCPHooks should return non-nil hooks")
-	}
-
-	// Test that hooks don't panic when called
-	// Note: We can't easily test the actual hook behavior without complex setup
-	// but we can at least verify the hooks object is created properly
-}
-
-func TestMultiHandlerIntegration(t *testing.T) {
+func TestIntegrationHooksWithNotificationHandler(t *testing.T) {
 	var consoleBuffer bytes.Buffer
-	consoleHandler := slog.NewTextHandler(&consoleBuffer, &slog.HandlerOptions{})
+	mockNotifier := new(mockSender) // Create a new mock for each test run or sub-test for isolation
 
-	mockSender := &MockNotificationSender{}
-	mockSender.On("SendNotificationToAllClients",
-		notificationMethod,
-		map[string]interface{}{
-			"level":  "info",
-			"logger": lunoMCPLogger,
-			"data":   "integration test message",
-		},
-	).Return().Once()
+	consoleHandler := slog.NewJSONHandler(&consoleBuffer, &slog.HandlerOptions{Level: slog.LevelDebug})
+	mcpNotificationHandler := NewMCPNotificationHandler(mockNotifier, slog.LevelDebug)
+	multiHandler := NewMultiHandler(consoleHandler, mcpNotificationHandler)
+	// Set this multiHandler as the default logger for the duration of this test
+	originalLogger := slog.Default()
+	slog.SetDefault(slog.New(multiHandler))
+	defer slog.SetDefault(originalLogger) // Restore original logger after test
 
-	mcpHandler := NewMCPNotificationHandler(mockSender, slog.LevelInfo)
-	multiHandler := NewMultiHandler(consoleHandler, mcpHandler)
+	ctx := context.Background()
 
-	record := slog.NewRecord(time.Now(), slog.LevelInfo, "integration test message", 0)
-	err := multiHandler.Handle(context.Background(), record)
-	if err != nil {
-		t.Errorf(unexpectedErrorFormat, err)
-	}
+	t.Run("LogRequestHook interaction", func(t *testing.T) {
+		consoleBuffer.Reset()
+		// Reset mock expectations for this sub-test.
+		// testify/mock doesn't have a direct Reset() for all expectations on the mock object itself.
+		// Instead, we create a new mock or manage expectations per test.
+		// For this structure, re-initialize mockNotifier for true isolation if needed, or ensure .On()...Once() is specific enough.
+		mockNotifier = new(mockSender) // Re-initialize for this sub-test
+		// Re-setup the handler with the new mock if it captures the mock instance
+		mcpNotificationHandler := NewMCPNotificationHandler(mockNotifier, slog.LevelDebug)
+		multiHandler := NewMultiHandler(consoleHandler, mcpNotificationHandler)
+		slog.SetDefault(slog.New(multiHandler)) // Re-set default logger with new handler chain
 
-	// Verify console handler also received the message
-	if !strings.Contains(consoleBuffer.String(), "integration test message") {
-		t.Error("Console handler should have received the message")
-	}
+		reqID := "req-integ-001"
+		reqMethod := mcp.MCPMethod("test.integration")
 
-	// Verify MCP handler received the message
-	mockSender.AssertExpectations(t)
+		expectedNotificationParams := map[string]any{
+			"level":  string(mcp.LoggingLevelDebug),
+			"logger": loggerName,
+			"data":   logMsgMCPRequest,
+		}
+		notification := mcp.NewLoggingMessageNotification(mcp.LoggingLevelDebug, loggerName, logMsgMCPRequest)
+		mockNotifier.On("SendNotificationToAllClients", notification.Method, expectedNotificationParams).Once()
+
+		LogRequestHook(ctx, reqID, reqMethod, nil)
+
+		assert.True(t, strings.Contains(consoleBuffer.String(), logMsgMCPRequest), "Console log should contain BeforeAny message")
+		assert.True(t, strings.Contains(consoleBuffer.String(), string(reqMethod)), "Console log should contain method")
+		mockNotifier.AssertExpectations(t)
+	})
+
+	t.Run("LogErrorHook interaction", func(t *testing.T) {
+		consoleBuffer.Reset()
+		mockNotifier = new(mockSender) // Re-initialize for this sub-test
+		mcpNotificationHandler := NewMCPNotificationHandler(mockNotifier, slog.LevelDebug)
+		multiHandler := NewMultiHandler(consoleHandler, mcpNotificationHandler)
+		slog.SetDefault(slog.New(multiHandler))
+
+		errID := "err-integ-002"
+		errMethod := mcp.MCPMethod("test.errorIntegration")
+		testErr := errors.New("integration error")
+
+		expectedErrorNotificationParams := map[string]any{
+			"level":  string(mcp.LoggingLevelError),
+			"logger": loggerName,
+			"data":   logMsgMCPError,
+		}
+		errorNotification := mcp.NewLoggingMessageNotification(mcp.LoggingLevelError, loggerName, logMsgMCPError)
+		mockNotifier.On("SendNotificationToAllClients", errorNotification.Method, expectedErrorNotificationParams).Once()
+
+		LogErrorHook(ctx, errID, errMethod, nil, testErr)
+
+		assert.True(t, strings.Contains(consoleBuffer.String(), logMsgMCPError))
+		assert.True(t, strings.Contains(consoleBuffer.String(), string(errMethod)))
+		assert.True(t, strings.Contains(consoleBuffer.String(), "integration error"))
+		mockNotifier.AssertExpectations(t)
+	})
 }

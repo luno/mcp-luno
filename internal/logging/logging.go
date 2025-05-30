@@ -71,12 +71,14 @@ func (h *MultiHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 }
 
 // WithGroup implements slog.Handler
-func (h *MultiHandler) WithGroup(name string) slog.Handler {
-	handlers := make([]slog.Handler, len(h.handlers))
-	for i, handler := range h.handlers {
-		handlers[i] = handler.WithGroup(name)
+func (m *MultiHandler) WithGroup(name string) slog.Handler {
+	// Create a new slice for the handlers with the group applied.
+	groupedHandlers := make([]slog.Handler, len(m.handlers))
+	for i, h := range m.handlers {
+		groupedHandlers[i] = h.WithGroup(name)
 	}
-	return &MultiHandler{handlers: handlers}
+	// Return a new MultiHandler instance with the grouped handlers.
+	return NewMultiHandler(groupedHandlers...)
 }
 
 // NotificationSender interface for sending notifications to clients
@@ -155,34 +157,40 @@ func slogLevelToMCPLevel(level slog.Level) mcp.LoggingLevel {
 	}
 }
 
+// LogRequestHook is the function registered for BeforeAny hook.
+// It logs all incoming requests at debug level.
+func LogRequestHook(ctx context.Context, id any, method mcp.MCPMethod, message any) {
+	slog.DebugContext(ctx, "MCP request received",
+		slog.String("method", string(method)),
+		slog.Any("id", id))
+}
+
+// LogSuccessHook is the function registered for OnSuccess hook.
+// It logs all outgoing successful responses at debug level.
+func LogSuccessHook(ctx context.Context, id any, method mcp.MCPMethod, message any, result any) {
+	slog.DebugContext(ctx, "MCP response sent",
+		slog.Any("id", id),
+		slog.String("method", string(method)))
+}
+
+// LogErrorHook is the function registered for OnError hook.
+// It logs all errors at error level.
+func LogErrorHook(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
+	slog.ErrorContext(ctx, "MCP error occurred",
+		slog.Any("id", id), // Added id for consistency
+		slog.String("method", string(method)),
+		slog.Any("error", err))
+}
+
 // MCPHooks returns hooks for the MCP server that handle logging
 func MCPHooks() *server.Hooks {
-	// Create a new hooks instance
 	hooks := &server.Hooks{}
 
-	// Add request hook - using BeforeAny hook
-	hooks.AddBeforeAny(func(ctx context.Context, id any, method mcp.MCPMethod, message any) {
-		// Log all incoming requests at debug level
-		slog.DebugContext(ctx, "MCP request received",
-			slog.String("method", string(method)),
-			slog.Any("id", id))
-	})
+	hooks.AddBeforeAny(LogRequestHook)
 
-	// Add response hook - using OnSuccess hook
-	hooks.AddOnSuccess(func(ctx context.Context, id any, method mcp.MCPMethod, message any, result any) {
-		// Log all outgoing responses at debug level
-		slog.DebugContext(ctx, "MCP response sent",
-			slog.Any("id", id),
-			slog.String("method", string(method)))
-	})
+	hooks.AddOnSuccess(LogSuccessHook)
 
-	// Add error hook
-	hooks.AddOnError(func(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
-		// Log all errors at error level
-		slog.ErrorContext(ctx, "MCP error occurred",
-			slog.Any("error", err),
-			slog.String("method", string(method)))
-	})
+	hooks.AddOnError(LogErrorHook)
 
 	return hooks
 }

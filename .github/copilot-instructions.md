@@ -38,7 +38,10 @@ When generating code with Copilot, ensure it follows these principles:
 - Ensure proper validation of inputs from clients
 
 ### Tool Dependencies
+
+#### Mockery
 - Mockery is declared as a tool in the go.mod file, this means that instead of running the `mockery` command, we run it as `go tool mockery`
+- Use .EXPECT() rather than .On() for setting expectations in tests
 
 ## Testing Requirements
 
