@@ -102,12 +102,47 @@ func TestNewMCPServer(t *testing.T) {
 	}
 }
 
-func TestServeSSEStructure(t *testing.T) {
-	server := &mcpserver.MCPServer{}
+func TestServeSSEIntegration(t *testing.T) {
+	tests := []struct {
+		name     string
+		address  string
+		errorMsg string
+	}{
+		{
+			name:     "invalid address format",
+			address:  "invalid:address",
+			errorMsg: "lookup tcp/address: unknown port",
+		},
+		{
+			name:     "invalid port",
+			address:  "localhost:99999",
+			errorMsg: "invalid port",
+		},
+		{
+			name:     "bind to used port",
+			address:  "localhost:80", // Typically requires root privileges
+			errorMsg: "bind: permission denied",
+		},
+	}
 
-	// This will fail due to invalid address, but it proves the function signature is correct
-	// We just want to verify it compiles and can be called
-	err := ServeSSE(context.Background(), server, "invalid:address")
-	// We expect an error since we're providing an invalid address
-	require.ErrorContains(t, err, "lookup tcp/address: unknown port")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a proper MCP server for testing
+			lunoClient := luno.NewClient()
+			cfg := &config.Config{LunoClient: lunoClient}
+			server := NewMCPServer("test-sse-server", "1.0.0", cfg)
+
+			// Set up context with or without timeout
+			ctx := context.Background()
+			// Test ServeSSE functionality
+			err := ServeSSE(ctx, server, tc.address)
+
+			if tc.errorMsg != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

@@ -220,16 +220,6 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 		pair = normalizeCurrencyPair(pair)
 		slog.Debug("Normalized trading pair", "originalPair", pair, "normalizedPair", pair)
 
-		// Validate the trading pair with our improved validation function
-		isValid, errorMsg, suggestions := ValidatePair(ctx, cfg, pair)
-		if !isValid {
-			// If invalid, show a helpful error message with suggestions
-			suggestionsStr := strings.Join(suggestions, ", ")
-			pairErrorMsg := fmt.Sprintf("Invalid trading pair: %s\n\n%s\n\nPlease try one of these working pairs: %s",
-				pair, errorMsg, suggestionsStr)
-			return mcp.NewToolResultError(pairErrorMsg), nil
-		}
-
 		orderType, err := request.RequireString("type")
 		if err != nil {
 			return mcp.NewToolResultErrorFromErr("getting type from request", err), nil

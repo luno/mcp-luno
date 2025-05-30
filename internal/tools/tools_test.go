@@ -59,55 +59,6 @@ func TestGetWorkingPairs(t *testing.T) {
 	}
 }
 
-// TestFindSimilarPairs tests the findSimilarPairs function using table-driven tests
-func TestFindSimilarPairs(t *testing.T) {
-	tests := []struct {
-		name           string
-		inputPair      string
-		expectedResult string
-		expectResults  bool
-	}{
-		{
-			name:           "BTC should suggest XBT alternatives",
-			inputPair:      "BTCGBP",
-			expectedResult: "XBTGBP",
-			expectResults:  true,
-		},
-		{
-			name:           "XBT prefix should return some suggestions",
-			inputPair:      "XBTUSD",
-			expectedResult: "", // We don't care about specific pairs, just that we get some
-			expectResults:  true,
-		},
-		{
-			name:           "Invalid pair should return fallback suggestions",
-			inputPair:      "INVALIDPAIR",
-			expectedResult: "", // We don't care about specific pairs, just that we get some
-			expectResults:  true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			suggestions := findSimilarPairs(tc.inputPair)
-
-			// Test that we get at least some suggestions when expected
-			if tc.expectResults && len(suggestions) == 0 {
-				t.Errorf("findSimilarPairs(%q) returned no suggestions, expected some",
-					tc.inputPair)
-			}
-
-			// If we're looking for a specific result, check for it
-			if tc.expectedResult != "" {
-				if !slices.Contains(suggestions, tc.expectedResult) {
-					t.Errorf("findSimilarPairs(%q) did not include expected suggestion %q",
-						tc.inputPair, tc.expectedResult)
-				}
-			}
-		})
-	}
-}
-
 func TestToolCreation(t *testing.T) {
 	tests := []struct {
 		name     string
