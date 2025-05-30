@@ -42,7 +42,7 @@ func TestNewMCPServer(t *testing.T) {
 				func() *mcpserver.Hooks {
 					h := &mcpserver.Hooks{}
 					h.AddBeforeAny(func(ctx context.Context, id any, method mcp.MCPMethod, message any) {
-						// Hook logic would go here if there were specific actions to test
+						// Intentionally empty - testing hook registration, not hook execution.
 					})
 					return h
 				}(),
@@ -56,28 +56,28 @@ func TestNewMCPServer(t *testing.T) {
 				func() *mcpserver.Hooks { // Corresponds to original OnAnyHookFunc
 					h := &mcpserver.Hooks{}
 					h.AddBeforeAny(func(ctx context.Context, id any, method mcp.MCPMethod, message any) {
-						// Hook logic would go here if there were specific actions to test
+						// Intentionally empty - testing hook registration, not hook execution.
 					})
 					return h
 				}(),
 				func() *mcpserver.Hooks { // Corresponds to original BeforeAnyHookFunc
 					h := &mcpserver.Hooks{}
 					h.AddBeforeAny(func(ctx context.Context, id any, method mcp.MCPMethod, message any) {
-						// Hook logic would go here if there were specific actions to test
+						// Intentionally empty - testing hook registration, not hook execution.
 					})
 					return h
 				}(),
 				func() *mcpserver.Hooks { // Corresponds to original AfterAnyHookFunc, using AddOnSuccess for generality
 					h := &mcpserver.Hooks{}
 					h.AddOnSuccess(func(ctx context.Context, id any, method mcp.MCPMethod, message any, result any) {
-						// Hook logic would go here if there were specific actions to test
+						// Intentionally empty - testing hook registration, not hook execution.
 					})
 					return h
 				}(),
 				func() *mcpserver.Hooks { // Corresponds to original OnErrorHookFunc
 					h := &mcpserver.Hooks{}
 					h.AddOnError(func(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
-						// Hook logic would go here if there were specific actions to test
+						// Intentionally empty - testing hook registration, not hook execution.
 					})
 					return h
 				}(),
@@ -92,9 +92,8 @@ func TestNewMCPServer(t *testing.T) {
 
 			server := NewMCPServer(tc.srvName, tc.version, cfg, tc.hooks...)
 
-			if server == nil {
-				t.Error("NewMCPServer should return non-nil server")
-			}
+			require.NotNil(t, server, "NewMCPServer should return non-nil server")
+
 			// These should not panic
 			registerResources(server, cfg)
 			registerTools(server, cfg)

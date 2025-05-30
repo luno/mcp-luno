@@ -69,10 +69,23 @@ func TestExtractAccountID(t *testing.T) {
 	}
 }
 
-// TestHandleWalletResourceStructure tests that the wallet resource handler can be created
+// TestHandleWalletResourceStructure tests that the wallet resource handler can be created and handles nil config
 func TestHandleWalletResourceStructure(t *testing.T) {
 	handler := HandleWalletResource(nil)
 	assert.NotNil(t, handler, "HandleWalletResource should return a non-nil handler")
+
+	// Verify handler returns error with nil config
+	req := mcp.ReadResourceRequest{
+		Params: struct {
+			URI       string         `json:"uri"`
+			Arguments map[string]any `json:"arguments,omitempty"`
+		}{
+			URI: WalletResourceURI,
+		},
+	}
+	result, err := handler(context.Background(), req)
+	assert.Error(t, err)
+	assert.Nil(t, result)
 }
 
 // TestHandleTransactionsResourceStructure tests the transactions resource handler structure
@@ -87,7 +100,9 @@ func TestHandleAccountTemplateStructure(t *testing.T) {
 	assert.NotNil(t, handler, "HandleAccountTemplate should return a non-nil handler")
 }
 
-// createTestConfig creates a configuration for testing
+// createTestConfig creates a minimal configuration for testing with a nil Luno client.
+// This configuration will cause handlers to return errors when invoked, which is useful
+// for testing error handling paths.
 func createTestConfig() *config.Config {
 	// For testing, we create a config with a nil client
 	// In real integration tests, this would be a properly configured client

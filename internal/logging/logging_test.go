@@ -12,7 +12,6 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -32,15 +31,6 @@ const (
 	jsonTestComponentAttr = `"component":"test"`
 	jsonTestGroupAttrOpen = `"testGroup":{`
 )
-
-// mockSender is a mock implementation of NotificationSender for testing
-type mockSender struct {
-	mock.Mock
-}
-
-func (m *mockSender) SendNotificationToAllClients(method string, params map[string]any) {
-	m.Called(method, params)
-}
 
 func TestSlogLevelToMCPLevel(t *testing.T) {
 	testCases := []struct {
@@ -64,7 +54,7 @@ func TestSlogLevelToMCPLevel(t *testing.T) {
 }
 
 func TestMCPNotificationHandlerEnabled(t *testing.T) {
-	handler := NewMCPNotificationHandler(&mockSender{}, slog.LevelInfo) // Only Info and above
+	handler := NewMCPNotificationHandler(&MockNotificationSender{}, slog.LevelInfo) // Only Info and above
 
 	assert.True(t, handler.Enabled(context.Background(), slog.LevelInfo), "Info level should be enabled")
 	assert.True(t, handler.Enabled(context.Background(), slog.LevelWarn), "Warn level should be enabled")
@@ -73,7 +63,7 @@ func TestMCPNotificationHandlerEnabled(t *testing.T) {
 }
 
 func TestMCPNotificationHandlerHandleNotificationFormat(t *testing.T) {
-	mockS := new(mockSender)
+	mockS := new(MockNotificationSender)
 	handler := NewMCPNotificationHandler(mockS, slog.LevelDebug) // Enable all levels for this test
 
 	level := slog.LevelInfo
@@ -96,7 +86,7 @@ func TestMCPNotificationHandlerHandleNotificationFormat(t *testing.T) {
 }
 
 func TestMCPNotificationHandlerWithAttrsAndGroup(t *testing.T) {
-	handler := NewMCPNotificationHandler(&mockSender{}, slog.LevelInfo)
+	handler := NewMCPNotificationHandler(&MockNotificationSender{}, slog.LevelInfo)
 
 	attrs := []slog.Attr{slog.String("key", "value")}
 	handlerWithAttrs := handler.WithAttrs(attrs)
@@ -239,7 +229,7 @@ func TestLoggingHooksExecution(t *testing.T) {
 
 func TestIntegrationHooksWithNotificationHandler(t *testing.T) {
 	var consoleBuffer bytes.Buffer
-	mockNotifier := new(mockSender) // Create a new mock for each test run or sub-test for isolation
+	mockNotifier := new(MockNotificationSender) // Create a new mock for each test run or sub-test for isolation
 
 	consoleHandler := slog.NewJSONHandler(&consoleBuffer, &slog.HandlerOptions{Level: slog.LevelDebug})
 	mcpNotificationHandler := NewMCPNotificationHandler(mockNotifier, slog.LevelDebug)
@@ -257,7 +247,7 @@ func TestIntegrationHooksWithNotificationHandler(t *testing.T) {
 		// testify/mock doesn't have a direct Reset() for all expectations on the mock object itself.
 		// Instead, we create a new mock or manage expectations per test.
 		// For this structure, re-initialize mockNotifier for true isolation if needed, or ensure .On()...Once() is specific enough.
-		mockNotifier = new(mockSender) // Re-initialize for this sub-test
+		mockNotifier = new(MockNotificationSender) // Re-initialize for this sub-test
 		// Re-setup the handler with the new mock if it captures the mock instance
 		mcpNotificationHandler := NewMCPNotificationHandler(mockNotifier, slog.LevelDebug)
 		multiHandler := NewMultiHandler(consoleHandler, mcpNotificationHandler)
@@ -283,7 +273,7 @@ func TestIntegrationHooksWithNotificationHandler(t *testing.T) {
 
 	t.Run("LogErrorHook interaction", func(t *testing.T) {
 		consoleBuffer.Reset()
-		mockNotifier = new(mockSender) // Re-initialize for this sub-test
+		mockNotifier = new(MockNotificationSender) // Re-initialize for this sub-test
 		mcpNotificationHandler := NewMCPNotificationHandler(mockNotifier, slog.LevelDebug)
 		multiHandler := NewMultiHandler(consoleHandler, mcpNotificationHandler)
 		slog.SetDefault(slog.New(multiHandler))

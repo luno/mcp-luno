@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/luno/luno-mcp/internal/config"
 	mcpserver "github.com/mark3labs/mcp-go/server"
@@ -279,11 +278,11 @@ func TestSetupSignalHandling(t *testing.T) {
 	// Test that cancel function works
 	cancel()
 
-	// Give it a moment to propagate
+	// Context should be cancelled immediately
 	select {
 	case <-ctx.Done():
 		// Expected behavior
-	case <-time.After(time.Millisecond * 100):
+	default:
 		t.Fatal("Context should be cancelled after calling cancel()")
 	}
 }

@@ -41,6 +41,8 @@ func loadEnvFile() bool {
 		if err := godotenv.Load(path); err == nil {
 			log.Printf("Successfully loaded environment from %s", path)
 			return true
+		} else {
+			log.Printf("Failed to load %s: %v", path, err)
 		}
 	}
 
