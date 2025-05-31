@@ -22,7 +22,7 @@ This project is currently in **beta phase**. While we've made every effort to en
 
 We welcome feedback and bug reports to help improve the project. Please report any issues you encounter via the [GitHub issue tracker](../../issues).
 
-[![Install in VS Code with Docker](https://img.shields.io/badge/VS_Code-Install_Luno_MCP_(Docker)-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=luno-mcp&inputs=%5B%7B%22id%22%3A%22luno_api_key_id%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Key%20ID%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22luno_api_secret%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%20%22--rm%22%2C%20%22-i%22%2C%20%22-e%22%2C%20%22LUNO_API_KEY_ID%3D%24%7Binput%3Aluno_api_key_id%7D%22%2C%20%22-e%22%2C%20%22LUNO_API_SECRET%3D%24%7Binput%3Aluno_api_secret%7D%22%2C%20%22ghcr.io%2Fluno%2Fluno-mcp%3Alatest%22%5D%7D)
+[![Install in VS Code with Docker](<https://img.shields.io/badge/VS_Code-Install_Luno_MCP_(Docker)-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white>)](https://insiders.vscode.dev/redirect/mcp/install?name=luno-mcp&inputs=%5B%7B%22id%22%3A%22luno_api_key_id%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Key%20ID%22%2C%22password%22%3Atrue%7D%2C%7B%22id%22%3A%22luno_api_secret%22%2C%22type%22%3A%22promptString%22%2C%22description%22%3A%22Luno%20API%20Secret%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%20%22--rm%22%2C%20%22-i%22%2C%20%22-e%22%2C%20%22LUNO_API_KEY_ID%3D%24%7Binput%3Aluno_api_key_id%7D%22%2C%20%22-e%22%2C%20%22LUNO_API_SECRET%3D%24%7Binput%3Aluno_api_secret%7D%22%2C%20%22ghcr.io%2Fluno%2Fluno-mcp%3Alatest%22%5D%7D)
 
 ## Features
 
@@ -105,7 +105,7 @@ To integrate with VS Code, add the following to your settings.json file (or clic
 This configuration will make VS Code run the Docker container. Ensure Docker is running on your system.
 
 ```json
-"mcp": {
+{
   "servers": {
     "luno-docker": {
       "command": "docker",
@@ -113,11 +113,11 @@ This configuration will make VS Code run the Docker container. Ensure Docker is 
         "run", "--rm", "-i",
         "-e", "LUNO_API_KEY_ID=${input:luno_api_key_id}",
         "-e", "LUNO_API_SECRET=${input:luno_api_secret}",
-        // Optional: Pass LUNO_API_DEBUG=true
+        // Optional: Add debug info
         // "-e", "LUNO_API_DEBUG=true",
+        // Optional: Override default API domain
+        // "-e", "LUNO_API_DOMAIN=api.staging.luno.com",
         "ghcr.io/luno/luno-mcp:latest"
-        // Optional: Pass additional arguments to luno-mcp
-        // "--log-level", "debug"
       ],
       "inputs": [
          {"id": "luno_api_key_id", "type": "promptString", "description": "Luno API Key ID", "password": true},
