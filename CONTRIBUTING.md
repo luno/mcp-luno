@@ -47,8 +47,8 @@ Set the following environment variables in your shell:
 ```bash
 export LUNO_API_KEY_ID=your_api_key_id
 export LUNO_API_SECRET=your_api_secret
-# Optional: Enable debug mode
-export LUNO_API_DEBUG=true
+export LUNO_API_DEBUG=true            # Optional: Enable debug mode
+export LUNO_API_DOMAIN=api.luno.com   # Optional: Override API Domain
 ```
 
 #### An .env file
@@ -87,7 +87,12 @@ docker build -t luno-mcp .
 Run the Docker container with environment variables:
 
 ```bash
-docker run -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID -e LUNO_API_SECRET=$LUNO_API_SECRET luno-mcp
+docker run \
+   -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID \
+   -e LUNO_API_SECRET=$LUNO_API_SECRET \
+   -e LUNO_API_DOMAIN=api.staging.luno.com \
+   -e LUNO_API_DEBUG="true" \
+   luno-mcp
 ```
 
 Alternatively, for convenience during development, you can use an `.env` file to provide these environment variables (this prevents your API key and secret from being stored in your shell history):

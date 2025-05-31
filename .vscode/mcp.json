@@ -38,7 +38,7 @@
         "LUNO_API_KEY_ID": "${input:luno_api_key_id}",
         "LUNO_API_SECRET": "${input:luno_api_secret}",
         "LUNO_API_DOMAIN": "api.staging.luno.com",
-        "LUNO_API_DEBUG": "true",
+        "LUNO_API_DEBUG": "true"
       }
     },
     "github": { // https://github.com/github/github-mcp-server
