@@ -47,8 +47,8 @@ Set the following environment variables in your shell:
 ```bash
 export LUNO_API_KEY_ID=your_api_key_id
 export LUNO_API_SECRET=your_api_secret
-export LUNO_API_DEBUG=true            # Optional: Enable debug mode
-export LUNO_API_DOMAIN=api.luno.com   # Optional: Override API Domain
+export LUNO_API_DEBUG=true                   # Optional: Enable debug mode
+export LUNO_API_DOMAIN=staging.api.luno.com  # Optional: Override API Domain
 ```
 
 #### An .env file
@@ -58,6 +58,8 @@ Copy the `.env.example` file and name it `.env` (this is always gitignored), and
 ```env
 LUNO_API_KEY_ID=your_api_key_id
 LUNO_API_SECRET=your_api_secret
+LUNO_API_DEBUG=true                   # Optional: Enable debug mode
+LUNO_API_DOMAIN=api.staging.luno.com  # Optional: Override API Domain
 ```
 
 **Note**: When using the MCP server with VS Code or other MCP clients, credentials are provided through the client's input system. The `.env` file and environment variables are only needed for direct development when running `go run ./cmd/server` or the binary directly.
