@@ -88,10 +88,10 @@ Run the Docker container with environment variables:
 
 ```bash
 docker run \
-   -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID \
-   -e LUNO_API_SECRET=$LUNO_API_SECRET \
-   -e LUNO_API_DOMAIN=api.staging.luno.com \
-   -e LUNO_API_DEBUG="true" \
+   -e "LUNO_API_KEY_ID=${LUNO_API_KEY_ID}" \
+   -e "LUNO_API_SECRET=${LUNO_API_SECRET}" \
+   -e "LUNO_API_DOMAIN=api.staging.luno.com" \
+   -e "LUNO_API_DEBUG=true" \
    luno-mcp
 ```
 
