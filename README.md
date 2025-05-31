@@ -130,7 +130,9 @@ This configuration will make VS Code run the Docker container. Ensure Docker is 
 
 ### Building from source
 
-As well as adding one of these config options, you'll need to follow the "Build from source" instructions below.
+**For MCP client usage**: Add one of the config options below to your VS Code `settings.json` or `mcp.json` file. The credentials will be provided through VS Code's input prompts.
+
+**For direct development**: You'll also need to set up environment variables or a `.env` file as described in the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
 #### For stdio transport
 
@@ -141,9 +143,13 @@ As well as adding one of these config options, you'll need to follow the "Build 
       "command": "luno-mcp",
       "args": [],
       "env": {
-        "LUNO_API_KEY_ID": "${env:LUNO_API_KEY_ID}",
-        "LUNO_API_SECRET": "${env:LUNO_API_SECRET}"
-      }
+        "LUNO_API_KEY_ID": "${input:luno_api_key_id}",
+        "LUNO_API_SECRET": "${input:luno_api_secret}"
+      },
+      "inputs": [
+        {"id": "luno_api_key_id", "type": "promptString", "description": "Luno API Key ID", "password": true},
+        {"id": "luno_api_secret", "type": "promptString", "description": "Luno API Secret", "password": true}
+      ]
     }
   }
 }
@@ -189,6 +195,8 @@ As well as adding one of these config options, you'll need to follow the "Build 
    ```bash
    sudo mv luno-mcp /usr/local/bin/
    ```
+
+**Note**: When using with MCP clients like VS Code, credentials are provided through the client's input system. For direct development and testing, see the credential setup instructions in CONTRIBUTING.md.
 
 ## Security Considerations
 

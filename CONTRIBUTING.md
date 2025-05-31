@@ -38,25 +38,31 @@ We use pre-commit hooks to ensure code quality and consistency. The hooks will r
 
 ### Setting up API Credentials for Development
 
-Set these either through:
+For **direct development** (running the server outside of an MCP client), set credentials either through:
 
-#### A shell file
+#### Environment Variables
 
-Either set this through your shell file or terminal with:
-Set the following environment variables:
+Set the following environment variables in your shell:
 
 ```bash
 export LUNO_API_KEY_ID=your_api_key_id
 export LUNO_API_SECRET=your_api_secret
-# Optional: Enable debug mode
-export LUNO_API_DEBUG=true
+export LUNO_API_DEBUG=true                   # Optional: Enable debug mode
+export LUNO_API_DOMAIN=staging.api.luno.com  # Optional: Override API Domain
 ```
 
 #### An .env file
 
-Copy the .env.example file and name it .env (this always should be .gitignored), and paste your keys in there.
+Copy the `.env.example` file and name it `.env` (this is always gitignored), and paste your keys in there:
 
-Depending on your setup, you might need an additional step to load these vars for your application. E.g. [godotenv](https://github.com/joho/godotenv)
+```env
+LUNO_API_KEY_ID=your_api_key_id
+LUNO_API_SECRET=your_api_secret
+LUNO_API_DEBUG=true                   # Optional: Enable debug mode
+LUNO_API_DOMAIN=api.staging.luno.com  # Optional: Override API Domain
+```
+
+**Note**: When using the MCP server with VS Code or other MCP clients, credentials are provided through the client's input system. The `.env` file and environment variables are only needed for direct development when running `go run ./cmd/server` or the binary directly.
 
 ### Running the server
 
@@ -80,26 +86,24 @@ Build the Docker image:
 docker build -t luno-mcp .
 ```
 
-Run the Docker container:
+Run the Docker container with environment variables:
 
 ```bash
-docker run -e LUNO_API_KEY_ID=$LUNO_API_KEY_ID -e LUNO_API_SECRET=$LUNO_API_SECRET luno-mcp
+docker run \
+   -e "LUNO_API_KEY_ID=${LUNO_API_KEY_ID}" \
+   -e "LUNO_API_SECRET=${LUNO_API_SECRET}" \
+   -e "LUNO_API_DOMAIN=api.staging.luno.com" \
+   -e "LUNO_API_DEBUG=true" \
+   luno-mcp
 ```
 
-Alternatively, you can use an `.env` file to provide these environment variables. This simplifies the command and prevents your API key and secret from being stored in your shell history. First, ensure you have an `.env` file (you can copy `.env.example` and fill in your details) with your credentials, for example:
-
-```env
-LUNO_API_KEY_ID=your_api_key_id
-LUNO_API_SECRET=your_api_secret
-```
-
-Then, run the container using:
+Alternatively, for convenience during development, you can use an `.env` file to provide these environment variables (this prevents your API key and secret from being stored in your shell history):
 
 ```bash
 docker run --env-file .env luno-mcp
 ```
 
-You can also use the `--transport sse` and `--sse-address` flags with Docker when using an `.env` file:
+You can also use the `--transport sse` and `--sse-address` flags with Docker:
 
 ```bash
 docker run --env-file .env -p 8080:8080 luno-mcp --transport sse --sse-address 0.0.0.0:8080
