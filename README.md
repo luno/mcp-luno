@@ -130,7 +130,7 @@ This configuration will make VS Code run the Docker container. Ensure Docker is 
 
 ### Building from source
 
-**For MCP client usage**: Add one of the config options below to your VS Code settings.json or mcp.json file. The credentials will be provided through VS Code's input prompts.
+**For MCP client usage**: Add one of the config options below to your VS Code `settings.json` or `mcp.json` file. The credentials will be provided through VS Code's input prompts.
 
 **For direct development**: You'll also need to set up environment variables or a `.env` file as described in the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
