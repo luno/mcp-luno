@@ -17,6 +17,23 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// NewFromString is a test helper that creates a decimal from a string, failing the test on error.
+func NewFromString(t *testing.T, s string) decimal.Decimal {
+	t.Helper()
+	d, err := decimal.NewFromString(s)
+	if err != nil {
+		t.Fatalf("NewFromString(%q) failed: %v", s, err)
+	}
+	return d
+}
+
+// NewFromFloat64 is a test helper that creates a decimal from a float64, failing the test on error.
+func NewFromFloat64(t *testing.T, f float64) decimal.Decimal {
+	t.Helper()
+	d := decimal.NewFromFloat64(f, 8)
+	return d
+}
+
 const (
 	apiErrorStr               = "API error"
 	missingPairParameterStr   = "missing pair parameter"
@@ -176,19 +193,19 @@ func getTextContentFromResult(t *testing.T, result *mcp.CallToolResult) string {
 func TestHandleGetBalances(t *testing.T) {
 	tests := []struct {
 		name          string
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful get balances",
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
-				balance1, _ := decimal.NewFromString("1.5")
-				reserved1, _ := decimal.NewFromString("0.1")
-				unconfirmed1, _ := decimal.NewFromString("0.0")
-				balance2, _ := decimal.NewFromString("10000.0")
-				reserved2, _ := decimal.NewFromString("0.0")
-				unconfirmed2, _ := decimal.NewFromString("0.0")
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
+				balance1 := NewFromString(t, "1.5")
+				reserved1 := NewFromString(t, "0.1")
+				unconfirmed1 := NewFromString(t, "0.0")
+				balance2 := NewFromString(t, "10000.0")
+				reserved2 := NewFromString(t, "0.0")
+				unconfirmed2 := NewFromString(t, "0.0")
 
 				mockResponse := &luno.GetBalancesResponse{
 					Balance: []luno.AccountBalance{
@@ -217,7 +234,7 @@ func TestHandleGetBalances(t *testing.T) {
 		},
 		{
 			name: "GetBalances API error",
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().GetBalances(context.Background(), &luno.GetBalancesRequest{}).
 					Return(nil, errors.New(apiErrorStr))
 			},
@@ -229,7 +246,7 @@ func TestHandleGetBalances(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -265,7 +282,7 @@ func TestHandleGetTicker(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -274,7 +291,7 @@ func TestHandleGetTicker(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "XBTZAR",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.GetTickerResponse{
 					Pair:                "XBTZAR",
 					Timestamp:           luno.Time(time.UnixMilli(testTimestamp)),
@@ -294,7 +311,7 @@ func TestHandleGetTicker(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "BTCZAR",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.GetTickerResponse{
 					Pair:                "XBTZAR",
 					Timestamp:           luno.Time(time.UnixMilli(testTimestamp)),
@@ -312,7 +329,7 @@ func TestHandleGetTicker(t *testing.T) {
 		{
 			name:          "missing pair for getTicker",
 			requestParams: map[string]any{},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: gettingPairFromRequestStr,
 		},
@@ -321,7 +338,7 @@ func TestHandleGetTicker(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().GetTicker(context.Background(), &luno.GetTickerRequest{Pair: "INVALID"}).
 					Return(nil, errors.New(invalidPairStr))
 			},
@@ -333,7 +350,7 @@ func TestHandleGetTicker(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -369,7 +386,7 @@ func TestHandleGetOrderBook(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -378,7 +395,7 @@ func TestHandleGetOrderBook(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "XBTZAR",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.GetOrderBookResponse{
 					Timestamp: testTimestamp,
 					Bids: []luno.OrderBookEntry{
@@ -398,7 +415,7 @@ func TestHandleGetOrderBook(t *testing.T) {
 		{
 			name:          "missing pair for GetOrderBook",
 			requestParams: map[string]any{},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: gettingPairFromRequestStr,
 		},
@@ -407,7 +424,7 @@ func TestHandleGetOrderBook(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().GetOrderBook(context.Background(), &luno.GetOrderBookRequest{Pair: "INVALID"}).
 					Return(nil, errors.New(invalidPairStr))
 			},
@@ -419,7 +436,7 @@ func TestHandleGetOrderBook(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -455,7 +472,7 @@ func TestHandleCancelOrder(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -464,7 +481,7 @@ func TestHandleCancelOrder(t *testing.T) {
 			requestParams: map[string]any{
 				"order_id": "12345",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.StopOrderResponse{
 					Success: true,
 				}
@@ -476,7 +493,7 @@ func TestHandleCancelOrder(t *testing.T) {
 		{
 			name:          "missing order_id parameter",
 			requestParams: map[string]any{},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: "getting order_id from request",
 		},
@@ -485,7 +502,7 @@ func TestHandleCancelOrder(t *testing.T) {
 			requestParams: map[string]any{
 				"order_id": "invalid_id",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().StopOrder(context.Background(), &luno.StopOrderRequest{OrderId: "invalid_id"}).
 					Return(nil, errors.New("Order not found"))
 			},
@@ -497,7 +514,7 @@ func TestHandleCancelOrder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -526,7 +543,7 @@ func TestHandleListOrders(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -536,7 +553,7 @@ func TestHandleListOrders(t *testing.T) {
 				"pair":  "XBTZAR",
 				"limit": float64(50),
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.ListOrdersResponse{
 					Orders: []luno.Order{
 						{
@@ -566,7 +583,7 @@ func TestHandleListOrders(t *testing.T) {
 		{
 			name:          "successful list orders without pair",
 			requestParams: map[string]any{},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.ListOrdersResponse{
 					Orders: []luno.Order{},
 				}
@@ -582,7 +599,7 @@ func TestHandleListOrders(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().ListOrders(context.Background(), &luno.ListOrdersRequest{
 					Pair:  "INVALID",
 					Limit: 100, // Default limit
@@ -596,7 +613,7 @@ func TestHandleListOrders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -632,7 +649,7 @@ func TestHandleListTransactions(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -643,7 +660,7 @@ func TestHandleListTransactions(t *testing.T) {
 				"min_row":    float64(1),
 				"max_row":    float64(10),
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.ListTransactionsResponse{
 					Id: "123456",
 					Transactions: []luno.Transaction{
@@ -672,7 +689,7 @@ func TestHandleListTransactions(t *testing.T) {
 		{
 			name:          "missing account_id parameter",
 			requestParams: map[string]any{},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: "getting account_id from request",
 		},
@@ -681,7 +698,7 @@ func TestHandleListTransactions(t *testing.T) {
 			requestParams: map[string]any{
 				"account_id": "not_a_number",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: "Invalid account ID format",
 		},
@@ -690,7 +707,7 @@ func TestHandleListTransactions(t *testing.T) {
 			requestParams: map[string]any{
 				"account_id": "999999",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				accountIdInt, _ := strconv.ParseInt("999999", 10, 64)
 				mockClient.EXPECT().ListTransactions(context.Background(), &luno.ListTransactionsRequest{
 					Id:     accountIdInt,
@@ -706,7 +723,7 @@ func TestHandleListTransactions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -742,7 +759,7 @@ func TestHandleGetTransaction(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -752,7 +769,7 @@ func TestHandleGetTransaction(t *testing.T) {
 				"account_id":     "123456",
 				"transaction_id": "5",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.ListTransactionsResponse{
 					Id: "123456",
 					Transactions: []luno.Transaction{
@@ -793,7 +810,7 @@ func TestHandleGetTransaction(t *testing.T) {
 				"account_id":     "123456",
 				"transaction_id": "999",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.ListTransactionsResponse{
 					Id:           "123456",
 					Transactions: []luno.Transaction{},
@@ -813,7 +830,7 @@ func TestHandleGetTransaction(t *testing.T) {
 			requestParams: map[string]any{
 				"transaction_id": "5",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: "getting account_id from request",
 		},
@@ -822,7 +839,7 @@ func TestHandleGetTransaction(t *testing.T) {
 			requestParams: map[string]any{
 				"account_id": "123456",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: "getting transaction_id from request",
 		},
@@ -832,7 +849,7 @@ func TestHandleGetTransaction(t *testing.T) {
 				"account_id":     "not_a_number",
 				"transaction_id": "5",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: "Invalid account ID format",
 		},
@@ -842,7 +859,7 @@ func TestHandleGetTransaction(t *testing.T) {
 				"account_id":     "123456",
 				"transaction_id": "not_a_number",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: "Invalid transaction ID format",
 		},
@@ -851,7 +868,7 @@ func TestHandleGetTransaction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -887,7 +904,7 @@ func TestHandleListTrades(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -896,7 +913,7 @@ func TestHandleListTrades(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "XBTZAR",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.ListTradesResponse{
 					Trades: []luno.PublicTrade{
 						{
@@ -920,7 +937,7 @@ func TestHandleListTrades(t *testing.T) {
 				"pair":  "XBTZAR",
 				"since": strconv.FormatInt(testTimestamp, 10),
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				sinceTime := luno.Time(time.UnixMilli(testTimestamp))
 				mockResponse := &luno.ListTradesResponse{
 					Trades: []luno.PublicTrade{
@@ -943,7 +960,7 @@ func TestHandleListTrades(t *testing.T) {
 		{
 			name:          missingPairParameterStr,
 			requestParams: map[string]any{},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: gettingPairFromRequestStr,
 		},
@@ -953,7 +970,7 @@ func TestHandleListTrades(t *testing.T) {
 				"pair":  "XBTZAR",
 				"since": "not_a_number",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: "Invalid 'since' timestamp format",
 		},
@@ -962,7 +979,7 @@ func TestHandleListTrades(t *testing.T) {
 			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().ListTrades(context.Background(), &luno.ListTradesRequest{
 					Pair: "INVALID",
 				}).Return(nil, errors.New(invalidPairStr))
@@ -975,7 +992,7 @@ func TestHandleListTrades(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
@@ -1026,7 +1043,7 @@ func TestHandleCreateOrder(t *testing.T) {
 	tests := []struct {
 		name          string
 		requestParams map[string]any
-		mockSetup     func(*sdk.MockLunoClient)
+		mockSetup     func(*testing.T, *sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
@@ -1038,9 +1055,9 @@ func TestHandleCreateOrder(t *testing.T) {
 				"volume": "0.01",
 				"price":  "1000000",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
-				vol, _ := decimal.NewFromString("0.01")
-				price, _ := decimal.NewFromString("1000000")
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
+				vol := NewFromString(t, "0.01")
+				price := NewFromString(t, "1000000")
 
 				// Mock GetTicker call from GetMarketInfo
 				mockTickerResponse := &luno.GetTickerResponse{
@@ -1089,9 +1106,9 @@ func TestHandleCreateOrder(t *testing.T) {
 				"volume": "0.01",
 				"price":  "1000000",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
-				vol, _ := decimal.NewFromString("0.01")
-				price, _ := decimal.NewFromString("1000000")
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
+				vol := NewFromString(t, "0.01")
+				price := NewFromString(t, "1000000")
 
 				// Mock GetTicker call from GetMarketInfo
 				mockTickerResponse := &luno.GetTickerResponse{
@@ -1138,7 +1155,7 @@ func TestHandleCreateOrder(t *testing.T) {
 				"volume": "0.01",
 				"price":  "1000000",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().GetTicker(mock.Anything, mock.Anything).Return(nil, errors.New("API error"))
 			},
 			expectedError: true,
@@ -1152,7 +1169,7 @@ func TestHandleCreateOrder(t *testing.T) {
 				"volume": "0.01",
 				"price":  "1000000",
 			},
-			mockSetup: func(mockClient *sdk.MockLunoClient) {
+			mockSetup: func(t *testing.T, mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().GetTicker(mock.Anything, mock.Anything).Return(&luno.GetTickerResponse{Pair: "XBTZAR"}, nil)
 				mockClient.EXPECT().GetOrderBook(mock.Anything, mock.Anything).Return(nil, errors.New("API error"))
 			},
@@ -1166,7 +1183,7 @@ func TestHandleCreateOrder(t *testing.T) {
 				"volume": "0.01",
 				"price":  "1000000",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: "required argument \"pair\" not found",
 		},
@@ -1178,7 +1195,7 @@ func TestHandleCreateOrder(t *testing.T) {
 				"volume": "invalid_volume",
 				"price":  "1000000",
 			},
-			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
+			mockSetup:     func(t *testing.T, mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: "Invalid volume format",
 		},
@@ -1187,7 +1204,7 @@ func TestHandleCreateOrder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := sdk.NewMockLunoClient(t)
-			tt.mockSetup(mockClient)
+			tt.mockSetup(t, mockClient)
 
 			cfg := &config.Config{
 				LunoClient: mockClient,
