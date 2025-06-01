@@ -14,7 +14,7 @@ packages:
     interfaces:
       LunoClient:
         config:
-          filename: mock_luno_client.go
+          filename: mock_luno_client_gen.go
           dir: sdk
   github.com/luno/luno-mcp/internal/logging:
     config:
