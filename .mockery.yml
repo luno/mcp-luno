@@ -10,6 +10,12 @@ require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
 packages:
+  github.com/luno/luno-mcp/sdk:
+    interfaces:
+      LunoClient:
+        config:
+          filename: mock_luno_client_gen.go
+          dir: sdk
   github.com/luno/luno-mcp/internal/logging:
     config:
       all: true

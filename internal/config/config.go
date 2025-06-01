@@ -8,6 +8,7 @@ import (
 
 	"github.com/luno/luno-go"
 	"github.com/luno/luno-go/decimal"
+	"github.com/luno/luno-mcp/sdk"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 // Config holds the configuration for the application
 type Config struct {
 	// Luno client
-	LunoClient *luno.Client
+	LunoClient sdk.LunoClient
 }
 
 // Mask a string to show only the first 4 characters and replace the rest with asterisks

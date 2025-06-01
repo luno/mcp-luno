@@ -208,11 +208,7 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 
 		pair, err := request.RequireString("pair")
 		if err != nil {
-			// If no pair is provided, return a list of working pairs
-			workingPairs := GetWorkingPairs()
-			errorMsg := fmt.Sprintf("Trading pair is required. Please use one of these known working pairs: %s",
-				strings.Join(workingPairs, ", "))
-			return mcp.NewToolResultErrorFromErr(errorMsg, err), nil
+			return mcp.NewToolResultErrorFromErr("getting pair from request", err), nil
 		}
 		slog.Debug("Processing trading pair", "originalPair", pair)
 
@@ -258,8 +254,11 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 		}
 
 		// Get market info - we already validated the pair, but this provides additional info
-		marketInfo := GetMarketInfo(ctx, cfg, pair)
-		fmt.Println(marketInfo)
+		marketInfoString, err := GetMarketInfo(ctx, cfg, pair)
+		if err != nil {
+			slog.Error("Failed to get market info during order creation", "pair", pair, "error", err)
+			return mcp.NewToolResultError(fmt.Sprintf("Unable to create order: Failed to retrieve market information for pair %s. Details: %v", pair, err)), nil
+		}
 
 		// Log the request parameters for debugging
 		slog.Info("Creating order",
@@ -279,10 +278,10 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 		order, err := cfg.LunoClient.PostLimitOrder(ctx, createReq)
 		if err != nil {
 			// If the order fails despite our validation, provide detailed error information
-			errorMsg := fmt.Sprintf("Failed to create limit order: %v\n\n"+
-				"Here's what we know about this market:\n%s\n\n"+
+			errorMsg := fmt.Sprintf("Failed to create limit order: %v\\n\\n"+
+				"Here's what we know about this market:\\n%s\\n\\n"+
 				"This may be due to insufficient balance, market conditions, or API limits.",
-				err, marketInfo)
+				err, marketInfoString)
 
 			return mcp.NewToolResultError(errorMsg), nil
 		}
@@ -293,8 +292,8 @@ func HandleCreateOrder(cfg *config.Config) server.ToolHandlerFunc {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal order result: %v", err)), nil
 		}
 
-		successMsg := fmt.Sprintf("Order created successfully!\n\n%s\n\n%s",
-			string(resultJSON), marketInfo)
+		successMsg := fmt.Sprintf("Order created successfully!\\n\\n%s\\n\\n%s",
+			string(resultJSON), marketInfoString)
 		return mcp.NewToolResultText(successMsg), nil
 	}
 }
