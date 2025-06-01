@@ -122,6 +122,7 @@ func TestToolCreation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			tool := tt.toolFunc()
 
 			if tool.Name != tt.toolName {
