@@ -6,6 +6,9 @@ import (
 	"github.com/luno/luno-go"
 )
 
+// compile-time check that *luno.Client implements our interface
+var _ LunoClient = (*luno.Client)(nil)
+
 // LunoClient defines the interface for Luno API operations
 // This interface allows us to mock the Luno client for testing
 type LunoClient interface {
