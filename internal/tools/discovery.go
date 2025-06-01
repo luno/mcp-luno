@@ -10,16 +10,16 @@ import (
 )
 
 // GetMarketInfo returns a detailed description of the market situation
-func GetMarketInfo(ctx context.Context, cfg *config.Config, pair string) string {
+func GetMarketInfo(ctx context.Context, cfg *config.Config, pair string) (string, error) {
 	// First check if the pair is valid by trying to get ticker info
 	ticker, err := cfg.LunoClient.GetTicker(ctx, &luno.GetTickerRequest{Pair: pair})
 	if err != nil {
-		return fmt.Sprintf("Could not get market info for %s: %v", pair, err)
+		return "", fmt.Errorf("could not get market info for %s: %w", pair, err)
 	}
 
 	orderBook, err := cfg.LunoClient.GetOrderBook(ctx, &luno.GetOrderBookRequest{Pair: pair})
 	if err != nil {
-		return fmt.Sprintf("Got ticker but could not get order book for %s: %v", pair, err)
+		return "", fmt.Errorf("got ticker but could not get order book for %s: %w", pair, err)
 	}
 
 	var marketInfo strings.Builder
@@ -50,10 +50,5 @@ func GetMarketInfo(ctx context.Context, cfg *config.Config, pair string) string 
 		}
 	}
 
-	return marketInfo.String()
-}
-
-// GetWorkingPairs returns a list of known working pairs based on testing
-func GetWorkingPairs() []string {
-	return []string{"XBTZAR", "ETHZAR", "XBTNGN", "XBTGBP", "XBTUSD", "ETHXBT"}
+	return marketInfo.String(), nil
 }

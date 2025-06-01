@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -16,13 +14,14 @@ import (
 	"github.com/luno/luno-mcp/sdk"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
 	apiErrorStr               = "API error"
 	missingPairParameterStr   = "missing pair parameter"
 	gettingPairFromRequestStr = "getting pair from request"
-	invalidPairStr            = "Invalid pair"
+	invalidPairStr            = "invalid pair"
 	testTimestamp             = 1640995200000 // January 1, 2022 00:00:00 UTC
 )
 
@@ -55,24 +54,6 @@ func TestNormalizeCurrencyPair(t *testing.T) {
 					tc.input, result, tc.expected)
 			}
 		})
-	}
-}
-
-func TestGetWorkingPairs(t *testing.T) {
-	// This just tests that the function returns some pairs
-	// Since the implementation may change to return dynamic results
-	pairs := GetWorkingPairs()
-	if len(pairs) == 0 {
-		t.Error("GetWorkingPairs() returned empty list, expected some pairs")
-	}
-
-	// Check that known essential pairs are included
-	essentialPairs := []string{"XBTZAR", "XBTGBP"}
-
-	for _, essentialPair := range essentialPairs {
-		if !slices.Contains(pairs, essentialPair) {
-			t.Errorf("GetWorkingPairs() missing essential pair %s", essentialPair)
-		}
 	}
 }
 
@@ -175,16 +156,20 @@ func TestToolCreation(t *testing.T) {
 }
 
 // Helper function to extract text content from mcp.CallToolResult
-func getTextContentFromResult(result *mcp.CallToolResult) (string, error) {
+func getTextContentFromResult(t *testing.T, result *mcp.CallToolResult) string {
 	if result == nil || len(result.Content) == 0 {
-		return "", fmt.Errorf("result or content is nil or empty")
+		t.Fatal("result or content is nil or empty")
 	}
-	// Assuming the first content item is the one we want and it's text.
-	// Add more robust checking if multiple content types or items are possible.
+	// Extract text content from the first content item.
+	// This assumes single text content, which is the current pattern.
+	if len(result.Content) > 1 {
+		t.Fatalf("expected only one content item, got multiple")
+	}
 	if textContent, ok := result.Content[0].(mcp.TextContent); ok {
-		return textContent.Text, nil
+		return textContent.Text
 	}
-	return "", fmt.Errorf("content is not of type mcp.TextContent or not present as expected")
+	t.Fatalf("expected mcp.TextContent but got %T", result.Content[0])
+	return "" // Should not be reached
 }
 
 func TestHandleGetBalances(t *testing.T) {
@@ -230,7 +215,7 @@ func TestHandleGetBalances(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name: "API error",
+			name: "GetBalances API error",
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
 				mockClient.EXPECT().GetBalances(context.Background(), &luno.GetBalancesRequest{}).
 					Return(nil, errors.New(apiErrorStr))
@@ -258,17 +243,15 @@ func TestHandleGetBalances(t *testing.T) {
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					errorText, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorText := getTextContentFromResult(t, result)
 					assert.Contains(t, errorText, tt.errorContains)
 				}
 			} else {
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 
 				// Verify JSON structure
-				var balances []map[string]interface{}
+				var balances []map[string]any
 				err := json.Unmarshal([]byte(textContent), &balances)
 				assert.NoError(t, err)
 				assert.Len(t, balances, 2, "Should have 2 balances")
@@ -280,14 +263,14 @@ func TestHandleGetBalances(t *testing.T) {
 func TestHandleGetTicker(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful get ticker",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair": "XBTZAR",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -307,7 +290,7 @@ func TestHandleGetTicker(t *testing.T) {
 		},
 		{
 			name: "BTC to XBT normalization",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair": "BTCZAR",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -326,15 +309,15 @@ func TestHandleGetTicker(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name:          "missing pair parameter",
-			requestParams: map[string]interface{}{},
+			name:          "missing pair for getTicker",
+			requestParams: map[string]any{},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: gettingPairFromRequestStr,
 		},
 		{
-			name: "API error",
-			requestParams: map[string]interface{}{
+			name: "GetTicker API error",
+			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -364,17 +347,15 @@ func TestHandleGetTicker(t *testing.T) {
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					errorText, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorText := getTextContentFromResult(t, result)
 					assert.Contains(t, errorText, tt.errorContains)
 				}
 			} else {
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 
 				// Verify JSON structure
-				var ticker map[string]interface{}
+				var ticker map[string]any
 				err := json.Unmarshal([]byte(textContent), &ticker)
 				assert.NoError(t, err)
 				assert.Equal(t, "XBTZAR", ticker["pair"])
@@ -386,14 +367,14 @@ func TestHandleGetTicker(t *testing.T) {
 func TestHandleGetOrderBook(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful get order book",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair": "XBTZAR",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -414,15 +395,15 @@ func TestHandleGetOrderBook(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name:          missingPairParameterStr,
-			requestParams: map[string]interface{}{},
+			name:          "missing pair for GetOrderBook",
+			requestParams: map[string]any{},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: gettingPairFromRequestStr,
 		},
 		{
-			name: apiErrorStr,
-			requestParams: map[string]interface{}{
+			name: "GetOrderBook API error",
+			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -447,23 +428,19 @@ func TestHandleGetOrderBook(t *testing.T) {
 			request := createMockRequest(tt.requestParams)
 
 			result, err := handler(context.Background(), request)
-
 			assert.NoError(t, err)
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					assert.True(t, result.IsError)
-					errorMsg, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorMsg := getTextContentFromResult(t, result)
 					assert.Contains(t, errorMsg, tt.errorContains)
 				}
 			} else {
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 
 				// Verify JSON structure
-				var orderBook map[string]interface{}
+				var orderBook map[string]any
 				err := json.Unmarshal([]byte(textContent), &orderBook)
 				assert.NoError(t, err)
 				assert.Contains(t, orderBook, "bids")
@@ -476,14 +453,14 @@ func TestHandleGetOrderBook(t *testing.T) {
 func TestHandleCancelOrder(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful cancel order",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"order_id": "12345",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -497,14 +474,14 @@ func TestHandleCancelOrder(t *testing.T) {
 		},
 		{
 			name:          "missing order_id parameter",
-			requestParams: map[string]interface{}{},
+			requestParams: map[string]any{},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: "getting order_id from request",
 		},
 		{
-			name: apiErrorStr,
-			requestParams: map[string]interface{}{
+			name: "CancelOrder API error",
+			requestParams: map[string]any{
 				"order_id": "invalid_id",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -529,19 +506,15 @@ func TestHandleCancelOrder(t *testing.T) {
 			request := createMockRequest(tt.requestParams)
 
 			result, err := handler(context.Background(), request)
-
 			assert.NoError(t, err)
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					assert.True(t, result.IsError)
-					errorMsg, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorMsg := getTextContentFromResult(t, result)
 					assert.Contains(t, errorMsg, tt.errorContains)
 				}
 			} else {
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 			}
 		})
@@ -551,14 +524,14 @@ func TestHandleCancelOrder(t *testing.T) {
 func TestHandleListOrders(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful list orders with pair",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair":  "XBTZAR",
 				"limit": float64(50),
 			},
@@ -591,7 +564,7 @@ func TestHandleListOrders(t *testing.T) {
 		},
 		{
 			name:          "successful list orders without pair",
-			requestParams: map[string]interface{}{},
+			requestParams: map[string]any{},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
 				mockResponse := &luno.ListOrdersResponse{
 					Orders: []luno.Order{},
@@ -604,8 +577,8 @@ func TestHandleListOrders(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name: "API error",
-			requestParams: map[string]interface{}{
+			name: "ListOrders API error",
+			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -632,24 +605,20 @@ func TestHandleListOrders(t *testing.T) {
 			request := createMockRequest(tt.requestParams)
 
 			result, err := handler(context.Background(), request)
-
 			assert.NoError(t, err)
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					assert.True(t, result.IsError)
-					errorMsg, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorMsg := getTextContentFromResult(t, result)
 					assert.Contains(t, errorMsg, tt.errorContains)
 				}
 			} else {
 				assert.False(t, result.IsError)
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 
 				// Verify JSON structure
-				var ordersResponse map[string]interface{}
+				var ordersResponse map[string]any
 				err := json.Unmarshal([]byte(textContent), &ordersResponse)
 				assert.NoError(t, err)
 				assert.Contains(t, ordersResponse, "orders")
@@ -661,14 +630,14 @@ func TestHandleListOrders(t *testing.T) {
 func TestHandleListTransactions(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful list transactions",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"account_id": "123456",
 				"min_row":    float64(1),
 				"max_row":    float64(10),
@@ -701,14 +670,14 @@ func TestHandleListTransactions(t *testing.T) {
 		},
 		{
 			name:          "missing account_id parameter",
-			requestParams: map[string]interface{}{},
+			requestParams: map[string]any{},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
 			expectedError: true,
 			errorContains: "getting account_id from request",
 		},
 		{
 			name: "invalid account_id format",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"account_id": "not_a_number",
 			},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed for this case */ },
@@ -716,8 +685,8 @@ func TestHandleListTransactions(t *testing.T) {
 			errorContains: "Invalid account ID format",
 		},
 		{
-			name: apiErrorStr,
-			requestParams: map[string]interface{}{
+			name: "ListTransactions API error",
+			requestParams: map[string]any{
 				"account_id": "999999",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -746,24 +715,20 @@ func TestHandleListTransactions(t *testing.T) {
 			request := createMockRequest(tt.requestParams)
 
 			result, err := handler(context.Background(), request)
-
 			assert.NoError(t, err)
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					assert.True(t, result.IsError)
-					errorMsg, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorMsg := getTextContentFromResult(t, result)
 					assert.Contains(t, errorMsg, tt.errorContains)
 				}
 			} else {
 				assert.False(t, result.IsError)
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 
 				// Verify JSON structure
-				var transactionsResponse map[string]interface{}
+				var transactionsResponse map[string]any
 				err := json.Unmarshal([]byte(textContent), &transactionsResponse)
 				assert.NoError(t, err)
 				assert.Contains(t, transactionsResponse, "transactions")
@@ -775,14 +740,14 @@ func TestHandleListTransactions(t *testing.T) {
 func TestHandleGetTransaction(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful get transaction",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"account_id":     "123456",
 				"transaction_id": "5",
 			},
@@ -823,7 +788,7 @@ func TestHandleGetTransaction(t *testing.T) {
 		},
 		{
 			name: "transaction not found",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"account_id":     "123456",
 				"transaction_id": "999",
 			},
@@ -844,7 +809,7 @@ func TestHandleGetTransaction(t *testing.T) {
 		},
 		{
 			name: "missing account_id parameter",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"transaction_id": "5",
 			},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
@@ -853,7 +818,7 @@ func TestHandleGetTransaction(t *testing.T) {
 		},
 		{
 			name: "missing transaction_id parameter",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"account_id": "123456",
 			},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
@@ -862,7 +827,7 @@ func TestHandleGetTransaction(t *testing.T) {
 		},
 		{
 			name: "invalid account_id format",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"account_id":     "not_a_number",
 				"transaction_id": "5",
 			},
@@ -872,7 +837,7 @@ func TestHandleGetTransaction(t *testing.T) {
 		},
 		{
 			name: "invalid transaction_id format",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"account_id":     "123456",
 				"transaction_id": "not_a_number",
 			},
@@ -895,24 +860,20 @@ func TestHandleGetTransaction(t *testing.T) {
 			request := createMockRequest(tt.requestParams)
 
 			result, err := handler(context.Background(), request)
-
 			assert.NoError(t, err)
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					assert.True(t, result.IsError)
-					errorMsg, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorMsg := getTextContentFromResult(t, result)
 					assert.Contains(t, errorMsg, tt.errorContains)
 				}
 			} else {
 				assert.False(t, result.IsError)
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 
 				// Verify JSON structure
-				var transaction map[string]interface{}
+				var transaction map[string]any
 				err := json.Unmarshal([]byte(textContent), &transaction)
 				assert.NoError(t, err)
 				assert.Equal(t, float64(5), transaction["row_index"]) // Ensure correct transaction is returned
@@ -924,14 +885,14 @@ func TestHandleGetTransaction(t *testing.T) {
 func TestHandleListTrades(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful list trades without since",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair": "XBTZAR",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -954,7 +915,7 @@ func TestHandleListTrades(t *testing.T) {
 		},
 		{
 			name: "successful list trades with since",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair":  "XBTZAR",
 				"since": strconv.FormatInt(testTimestamp, 10),
 			},
@@ -980,14 +941,14 @@ func TestHandleListTrades(t *testing.T) {
 		},
 		{
 			name:          missingPairParameterStr,
-			requestParams: map[string]interface{}{},
+			requestParams: map[string]any{},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
 			errorContains: gettingPairFromRequestStr,
 		},
 		{
 			name: "invalid since format",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair":  "XBTZAR",
 				"since": "not_a_number",
 			},
@@ -996,8 +957,8 @@ func TestHandleListTrades(t *testing.T) {
 			errorContains: "Invalid 'since' timestamp format",
 		},
 		{
-			name: "API error",
-			requestParams: map[string]interface{}{
+			name: "ListTrades API error",
+			requestParams: map[string]any{
 				"pair": "INVALID",
 			},
 			mockSetup: func(mockClient *sdk.MockLunoClient) {
@@ -1023,24 +984,20 @@ func TestHandleListTrades(t *testing.T) {
 			request := createMockRequest(tt.requestParams)
 
 			result, err := handler(context.Background(), request)
-
 			assert.NoError(t, err)
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					assert.True(t, result.IsError)
-					errorMsg, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorMsg := getTextContentFromResult(t, result)
 					assert.Contains(t, errorMsg, tt.errorContains)
 				}
 			} else {
 				assert.False(t, result.IsError)
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 
 				// Verify JSON structure
-				var tradesResponse map[string]interface{}
+				var tradesResponse map[string]any
 				err := json.Unmarshal([]byte(textContent), &tradesResponse)
 				assert.NoError(t, err)
 				assert.Contains(t, tradesResponse, "trades")
@@ -1050,8 +1007,8 @@ func TestHandleListTrades(t *testing.T) {
 }
 
 // Helper function to create mock MCP requests
-func createMockRequest(params map[string]interface{}) mcp.CallToolRequest {
-	arguments := make(map[string]interface{})
+func createMockRequest(params map[string]any) mcp.CallToolRequest {
+	arguments := make(map[string]any)
 	for k, v := range params {
 		arguments[k] = v
 	}
@@ -1067,14 +1024,14 @@ func createMockRequest(params map[string]interface{}) mcp.CallToolRequest {
 func TestHandleCreateOrder(t *testing.T) {
 	tests := []struct {
 		name          string
-		requestParams map[string]interface{}
+		requestParams map[string]any
 		mockSetup     func(*sdk.MockLunoClient)
 		expectedError bool
 		errorContains string
 	}{
 		{
 			name: "successful create order",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair":   "XBTZAR",
 				"type":   "BUY",
 				"volume": "0.01",
@@ -1124,8 +1081,8 @@ func TestHandleCreateOrder(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name: "API error on create order",
-			requestParams: map[string]interface{}{
+			name: "CreateOrder PostLimitOrder API error",
+			requestParams: map[string]any{
 				"pair":   "XBTZAR",
 				"type":   "BUY",
 				"volume": "0.01",
@@ -1173,19 +1130,48 @@ func TestHandleCreateOrder(t *testing.T) {
 			errorContains: "Failed to create limit order",
 		},
 		{
-			name: "missing pair parameter for create order",
-			requestParams: map[string]interface{}{
+			name: "CreateOrder GetTicker API error",
+			requestParams: map[string]any{
+				"pair":   "XBTZAR",
+				"type":   "BUY",
+				"volume": "0.01",
+				"price":  "1000000",
+			},
+			mockSetup: func(mockClient *sdk.MockLunoClient) {
+				mockClient.EXPECT().GetTicker(mock.Anything, mock.Anything).Return(nil, errors.New("API error"))
+			},
+			expectedError: true,
+			errorContains: "Unable to create order: Failed to retrieve market information for pair XBTZAR",
+		},
+		{
+			name: "CreateOrder GetOrderBook API error",
+			requestParams: map[string]any{
+				"pair":   "XBTZAR",
+				"type":   "BUY",
+				"volume": "0.01",
+				"price":  "1000000",
+			},
+			mockSetup: func(mockClient *sdk.MockLunoClient) {
+				mockClient.EXPECT().GetTicker(mock.Anything, mock.Anything).Return(&luno.GetTickerResponse{Pair: "XBTZAR"}, nil)
+				mockClient.EXPECT().GetOrderBook(mock.Anything, mock.Anything).Return(nil, errors.New("API error"))
+			},
+			expectedError: true,
+			errorContains: "Unable to create order: Failed to retrieve market information for pair XBTZAR",
+		},
+		{
+			name: "no pair for create order",
+			requestParams: map[string]any{
 				"type":   "BUY",
 				"volume": "0.01",
 				"price":  "1000000",
 			},
 			mockSetup:     func(mockClient *sdk.MockLunoClient) { /* No mock setup needed */ },
 			expectedError: true,
-			errorContains: "Trading pair is required. Please use one of these known working pairs:",
+			errorContains: "required argument \"pair\" not found",
 		},
 		{
 			name: "invalid volume for create order",
-			requestParams: map[string]interface{}{
+			requestParams: map[string]any{
 				"pair":   "XBTZAR",
 				"type":   "BUY",
 				"volume": "invalid_volume",
@@ -1214,15 +1200,12 @@ func TestHandleCreateOrder(t *testing.T) {
 			if tt.expectedError {
 				assert.True(t, result.IsError)
 				if tt.errorContains != "" {
-					assert.True(t, result.IsError)
-					errorMsg, err := getTextContentFromResult(result)
-					assert.NoError(t, err)
+					errorMsg := getTextContentFromResult(t, result)
 					assert.Contains(t, errorMsg, tt.errorContains)
 				}
 			} else {
 				assert.False(t, result.IsError)
-				textContent, textErr := getTextContentFromResult(result)
-				assert.NoError(t, textErr)
+				textContent := getTextContentFromResult(t, result)
 				assert.NotEmpty(t, textContent)
 				assert.Contains(t, textContent, "Order created successfully!")
 				assert.Contains(t, textContent, "BXMC2SEAS4KF5S2")

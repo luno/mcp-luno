@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/luno/luno-go"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 )
 
 // NewMockLunoClient creates a new instance of MockLunoClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
