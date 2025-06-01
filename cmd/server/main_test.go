@@ -411,29 +411,24 @@ func TestMainFunctionFlow(t *testing.T) {
 
 func TestSetupEnhancedLogger(t *testing.T) {
 	tests := []struct {
-		name      string
-		logLevel  string
-		expectErr bool
+		name     string
+		logLevel string
 	}{
 		{
-			name:      "setup enhanced logger with debug level",
-			logLevel:  testLogLevelDebug,
-			expectErr: false,
+			name:     "setup enhanced logger with debug level",
+			logLevel: testLogLevelDebug,
 		},
 		{
-			name:      "setup enhanced logger with info level",
-			logLevel:  testLogLevelInfo,
-			expectErr: false,
+			name:     "setup enhanced logger with info level",
+			logLevel: testLogLevelInfo,
 		},
 		{
-			name:      "setup enhanced logger with error level",
-			logLevel:  testLogLevelError,
-			expectErr: false,
+			name:     "setup enhanced logger with error level",
+			logLevel: testLogLevelError,
 		},
 		{
-			name:      "setup enhanced logger with invalid level defaults to info",
-			logLevel:  "invalid",
-			expectErr: false,
+			name:     "setup enhanced logger with invalid level defaults to info",
+			logLevel: "invalid",
 		},
 	}
 
