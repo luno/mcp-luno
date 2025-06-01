@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log/slog"
 	"os"
@@ -406,4 +407,124 @@ func TestMainFunctionFlow(t *testing.T) {
 			// Expected behavior
 		}
 	})
+}
+
+func TestSetupEnhancedLogger(t *testing.T) {
+	tests := []struct {
+		name      string
+		logLevel  string
+		expectErr bool
+	}{
+		{
+			name:      "setup enhanced logger with debug level",
+			logLevel:  testLogLevelDebug,
+			expectErr: false,
+		},
+		{
+			name:      "setup enhanced logger with info level",
+			logLevel:  testLogLevelInfo,
+			expectErr: false,
+		},
+		{
+			name:      "setup enhanced logger with error level",
+			logLevel:  testLogLevelError,
+			expectErr: false,
+		},
+		{
+			name:      "setup enhanced logger with invalid level defaults to info",
+			logLevel:  "invalid",
+			expectErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set up environment variables for config loading
+			t.Setenv("LUNO_API_KEY_ID", "test_key")
+			t.Setenv("LUNO_API_SECRET", "test_secret")
+
+			// Load configuration
+			cfg, err := config.Load("")
+			require.NoError(t, err)
+
+			// Create MCP server
+			mcpServer := createMCPServer(cfg)
+			require.NotNil(t, mcpServer)
+
+			// Capture original logger to restore later
+			originalLogger := slog.Default()
+			defer slog.SetDefault(originalLogger)
+
+			// Test setupEnhancedLogger - this function sets the default logger
+			setupEnhancedLogger(mcpServer, tt.logLevel)
+
+			// Verify the logger was set as default
+			newLogger := slog.Default()
+			assert.NotNil(t, newLogger)
+			assert.NotEqual(t, originalLogger, newLogger, "Default logger should have changed")
+
+			// Test that the logger can be used for logging
+			slog.Info("Test log message from enhanced logger")
+			slog.Debug("Debug message from enhanced logger")
+			slog.Error("Error message from enhanced logger")
+		})
+	}
+}
+
+func TestStartServer(t *testing.T) {
+	tests := []struct {
+		name          string
+		flags         CliFlags
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "invalid transport type",
+			flags: CliFlags{
+				TransportType: "invalid",
+				SSEAddr:       testDefaultSSEAddr,
+				LunoDomain:    "",
+				LogLevel:      testLogLevelInfo,
+			},
+			expectError:   true,
+			errorContains: "invalid transport type",
+		},
+		{
+			name: "sse transport with invalid address",
+			flags: CliFlags{
+				TransportType: testTransportSSE,
+				SSEAddr:       "invalid:99999",
+				LunoDomain:    "",
+				LogLevel:      testLogLevelInfo,
+			},
+			expectError:   true,
+			errorContains: "invalid port",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set up environment variables for config loading
+			t.Setenv("LUNO_API_KEY_ID", "test_key")
+			t.Setenv("LUNO_API_SECRET", "test_secret")
+
+			// Load configuration
+			cfg, err := config.Load("")
+			require.NoError(t, err)
+
+			// Create MCP server
+			mcpServer := createMCPServer(cfg)
+			require.NotNil(t, mcpServer)
+
+			ctx := context.Background()
+
+			err = startServer(ctx, mcpServer, tt.flags)
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

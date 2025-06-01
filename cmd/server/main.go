@@ -124,7 +124,6 @@ func startServer(ctx context.Context, mcpServer *mcpserver.MCPServer, flags CliF
 }
 
 func main() {
-	// Load environment file
 	loadEnvFile()
 
 	// Parse command line flags
