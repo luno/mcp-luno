@@ -28,6 +28,7 @@ When generating code with Copilot, ensure it follows these principles:
 - Implement interfaces only when needed
 - Prefer simple, readable code over clever solutions
 - Use the Go standard library when appropriate
+- Don't worry about *test files* exceeding the cyclomatic complexity threshold
 
 ### MCP Server Guidelines
 
