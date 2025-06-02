@@ -52,11 +52,11 @@ jobs:
           {
             echo "cache_from<<EOF"
             echo "type=gha"
-            [ "${{ github.event_name }}" != "pull_request" ] && echo "type=registry,ref=ghcr.io/${{ github.repository }}:buildcache"
+            [ "${{ github.event_name }}" != "pull_request" ] && echo "type=registry,ref=ghcr.io/${{ github.repository }}/cache"
             echo "EOF"
             echo "cache_to<<EOF"
             echo "type=gha,mode=max"
-            [ "${{ github.event_name }}" != "pull_request" ] && echo "type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max"
+            [ "${{ github.event_name }}" != "pull_request" ] && echo "type=registry,ref=ghcr.io/${{ github.repository }}/cache,mode=max"
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
