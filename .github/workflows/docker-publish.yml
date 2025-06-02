@@ -36,15 +36,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - name: Download Go modules
-        run: go mod download
-
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -55,6 +46,20 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Set up cache configuration
+        id: cache
+        run: |
+          {
+            echo "from<<EOF"
+            echo "type=gha"
+            [ "${{ github.event_name }}" != "pull_request" ] && echo "type=registry,ref=ghcr.io/${{ github.repository }}:buildcache"
+            echo "EOF"
+            echo "to<<EOF"
+            echo "type=gha,mode=max"
+            [ "${{ github.event_name }}" != "pull_request" ] && echo "type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -63,11 +68,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=gha
-            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
-          cache-to: |
-            type=gha,mode=max
-            type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+          cache-from: ${{ steps.cache.outputs.from }}
+          cache-to: ${{ steps.cache.outputs.to }}
           build-args: |
             BUILDKIT_INLINE_CACHE=1
