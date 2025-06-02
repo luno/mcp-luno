@@ -29,10 +29,20 @@ LICENSE
 # Environment files
 .env
 *.env
+.env.example
 
-# Go specific (build cache, test binaries)
+# CI/CD and development configuration
+.github/
+.mockery.yml
+.pre-commit-config.yaml
+
+# Go specific (build cache, test binaries, coverage)
 *.test
 *.out
+coverage.out
+
+# Built binaries
+luno-mcp
 
 # OS specific
 .DS_Store
