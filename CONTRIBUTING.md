@@ -114,7 +114,7 @@ docker run --env-file .env -p 8080:8080 luno-mcp --transport sse --sse-address 0
 1. Create a new branch for your feature or bugfix (on a fork if you don't have permission to write to the repo):
 
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b name-featureName
    ```
 
 2. Make your changes and ensure they follow the project's coding conventions.
@@ -140,30 +140,6 @@ docker run --env-file .env -p 8080:8080 luno-mcp --transport sse --sse-address 0
    ```
 
 6. Create a pull request.
-
-## Project Structure
-
-- `cmd/` - Application entry points
-  - `server/` - Main server application
-  - `debug/` - Debugging utilities
-- `internal/` - Private application code
-  - `config/` - Configuration handling
-  - `logging/` - Logging infrastructure
-  - `resources/` - MCP resource implementations
-  - `server/` - Server implementation
-  - `tools/` - MCP tool implementations
-  - `tests/` - Integration tests
-- `LICENSE` - Project license
-- `Makefile` - Build and development commands
-- `README.md` - Project documentation
-
-## Testing
-
-We strive for good test coverage. Please add tests for new features and ensure existing tests pass:
-
-```bash
-make test
-```
 
 ## Code Style Guidelines
 

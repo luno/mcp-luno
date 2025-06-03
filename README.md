@@ -210,35 +210,6 @@ This tool requires API credentials that have access to your Luno account. Be cau
 3. **Rotate API Keys Regularly**: Periodically regenerate your API keys to limit the impact of potential leaks
 4. **Monitor API Usage**: Regularly check your Luno account for any unauthorized activity
 
-## Development
-
-### Testing
-
-The project includes both unit tests and integration tests. Unit tests can be run without any credentials, while integration tests require Luno API credentials.
-
-```bash
-# Run unit tests only
-go test -v ./... -short
-
-# Run integration tests (requires API credentials)
-go test -v ./internal/tests -run "Integration" -skip=""
-```
-
-### GitHub Actions
-
-This repository is configured with GitHub Actions for continuous integration testing:
-
-1. **Unit Tests**: Automatically run on all push events and pull requests to the main branch.
-2. **Integration Tests**: Can be run manually using the "Manual Integration Tests" workflow in the GitHub Actions tab.
-
-For integration tests to work in GitHub Actions, you need to set up the following secrets in your repository:
-
-- `LUNO_API_KEY`: Your Luno API key
-- `LUNO_API_SECRET`: Your Luno API secret
-- `RUN_INTEGRATION_TESTS`: Set to any non-empty value to enable integration tests on the main branch
-
-The integration tests are set up to run only when explicitly triggered or on the main branch when configured.
-
 ### Contributing
 
 If you'd like to contribute to the development of this project, please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
