@@ -9,6 +9,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/luno/luno-mcp)](https://goreportcard.com/report/github.com/luno/luno-mcp)
 [![GoDoc](https://godoc.org/github.com/luno/luno-mcp?status.svg)](https://godoc.org/github.com/luno/luno-mcp)
 
+
+<a href="https://glama.ai/mcp/servers/@luno/luno-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@luno/luno-mcp/badge" />
+</a>
+
 A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that provides access to the Luno cryptocurrency exchange API.
 
 This server enables integration with VS Code's Copilot and other MCP-compatible clients, providing contextual information and functionality related to the Luno cryptocurrency exchange.
